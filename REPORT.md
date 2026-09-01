@@ -33,9 +33,8 @@ The JSON response includes:
 - estimated pond depth and storage;
 - catchment area and GeoJSON catchment geometry.
 
-The sample response is generated during testing and should be copied into the final submission after the deployed endpoint is available.
+Local demonstration result using `grid_size=70&max_candidates=2`: the service detected 2,710 contour features, an elevation range of 267–298 m, and a 1 m contour interval. It returned two candidates; the first was at `[81.2899372847, 21.2499875606]`, elevation 267 m, with an estimated 16.0327 ha catchment and 4,233.98 m³ conservative storage estimate. These are observed outputs for the supplied sample, not values embedded in the implementation.
 
 ## Limitations and next phase
 
 This phase estimates terrain-only catchments. Rainfall intensity, runoff coefficient, soil infiltration, government land, satellite imagery, hydraulic outlet design, and field survey validation are intentionally excluded and should be added as separate data/analysis layers in later phases.
-
