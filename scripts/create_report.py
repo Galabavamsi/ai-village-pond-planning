@@ -173,7 +173,7 @@ def build_story():
         [P("KML and KMZ upload support", styles["SmallCustom"]), P("Sample map analyzed successfully", styles["SmallCustom"])],
     ], colWidths=[83 * mm, 83 * mm])
     cover_table.setStyle(TableStyle([("BACKGROUND", (0, 0), (-1, -1), PALE), ("BOX", (0, 0), (-1, -1), 0.8, LINE), ("LINEBEFORE", (1, 0), (1, -1), 0.8, LINE), ("VALIGN", (0, 0), (-1, -1), "TOP"), ("LEFTPADDING", (0, 0), (-1, -1), 10), ("RIGHTPADDING", (0, 0), (-1, -1), 10), ("TOPPADDING", (0, 0), (-1, -1), 8), ("BOTTOMPADDING", (0, 0), (-1, -1), 8)]))
-    story.extend([cover_table, Spacer(1, 22 * mm), Paragraph("Repository URL", styles["SmallCustom"]), Paragraph("[GitHub repository URL - add after repository creation]", styles["BodyCustom"]), Paragraph("Working API URL", styles["SmallCustom"]), Paragraph("Local: http://127.0.0.1:8000/analyzeContour", styles["BodyCustom"]), Paragraph("Public: [deployed API URL - add after remote deployment]", styles["BodyCustom"]), PageBreak()])
+    story.extend([cover_table, Spacer(1, 22 * mm), Paragraph("Repository URL", styles["SmallCustom"]), Paragraph("https://github.com/Galabavamsi/ai-village-pond-planning", styles["BodyCustom"]), Paragraph("Working API URL", styles["SmallCustom"]), Paragraph("Local: http://127.0.0.1:8000/analyzeContour", styles["BodyCustom"]), Paragraph("Remote: http://10.1.75.53:8000/analyzeContour", styles["BodyCustom"]), Paragraph("Public: [deployed public API URL - add after reverse proxy]", styles["BodyCustom"]), PageBreak()])
 
     # Executive summary
     story.extend(section("1. Executive summary"))
@@ -260,7 +260,7 @@ def build_story():
                   [P("Sample KMZ analysis", styles["TableBody"]), P("Confirms archive extraction", styles["TableBody"]), P("Passed", styles["TableBody"])]]
     story.append(table(validation, [43 * mm, 93 * mm, 38 * mm]))
     story.append(Paragraph("Remote deployment", styles["H2Custom"]))
-    story.append(code_block('git clone <GitHub repository URL>\ncd <repository-directory>\npython3 -m venv .venv\nsource .venv/bin/activate\npip install -r requirements.txt\ntmux new -s pond-api\nuvicorn app.main:app --host 0.0.0.0 --port 8000'))
+    story.append(code_block('git clone https://github.com/Galabavamsi/ai-village-pond-planning.git\ncd ai-village-pond-planning\npython3 -m venv .venv\nsource .venv/bin/activate\npip install -r requirements.txt\ntmux new -s pond-api\nuvicorn app.main:app --host 0.0.0.0 --port 8000'))
     story.append(Paragraph("After starting Uvicorn, detach from tmux with Ctrl-b then d. Reattach with tmux attach -t pond-api. A reverse proxy or secure tunnel should expose the service using the remote host's public URL. SSH credentials and tokens must remain outside the repository.", styles["BodyCustom"]))
 
     # Limits/future

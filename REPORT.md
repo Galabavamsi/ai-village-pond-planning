@@ -2,13 +2,17 @@
 
 ## GitHub repository
 
-To be filled after the repository is created and pushed: **`<GitHub repository URL>`**
+**https://github.com/Galabavamsi/ai-village-pond-planning**
 
 ## Working API route
 
 Local development route: `POST http://127.0.0.1:8000/analyzeContour`
 
-Remote deployment URL: **`<deployed API URL>/analyzeContour`**
+Remote host route: `POST http://10.1.75.53:8000/analyzeContour`
+
+SSH-tunnel route from the developer PC: `POST http://127.0.0.1:18000/analyzeContour`
+
+Public reverse-proxy URL: **`<deployed public API URL>/analyzeContour`**
 
 The route accepts a KML/KMZ file in a multipart field named `file`. Interactive documentation is generated at `/docs`.
 
