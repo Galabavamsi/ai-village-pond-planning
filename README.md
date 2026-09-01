@@ -88,6 +88,27 @@ runoff_volume_m3 = rainfall_m * catchment_area_m2 * runoff_coefficient
 
 This formula requires rainfall in metres and a locally justified runoff coefficient.
 
+## Build the submission report
+
+The submitted PDF is generated from the LaTeX source at
+\`latex/phase2_report.tex\`. It contains the equations as rendered mathematical
+displays, the algorithm summary, API documentation, deployment notes, Swagger
+screenshots, and clearly marked conceptual illustrations.
+
+From the repository root on Windows:
+
+\`\`\`powershell
+New-Item -ItemType Directory -Force tmp\latex-build | Out-Null
+pdflatex -interaction=nonstopmode -halt-on-error \`
+  -output-directory tmp\latex-build latex\phase2_report.tex
+pdflatex -interaction=nonstopmode -halt-on-error \`
+  -output-directory tmp\latex-build latex\phase2_report.tex
+Copy-Item -Force tmp\latex-build\phase2_report.pdf \`
+  output\pdf\AI_Village_Pond_Planning_Phase_2_Report.pdf
+\`\`\`
+
+The report's generated image assets are stored in \`output/imagegen/\`.
+
 ## API summary
 
 `POST /analyzeContour`

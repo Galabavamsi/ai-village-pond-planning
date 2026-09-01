@@ -4,6 +4,10 @@
 
 **https://github.com/Galabavamsi/ai-village-pond-planning**
 
+The submitted PDF is generated from \`latex/phase2_report.tex\`; its equations
+are rendered as LaTeX mathematics and its conceptual visuals are stored in
+\`output/imagegen/\`.
+
 ## Working API route
 
 Local development route: `POST http://127.0.0.1:8000/analyzeContour`
