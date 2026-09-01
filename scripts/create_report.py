@@ -7,10 +7,12 @@ from reportlab.lib.enums import TA_CENTER, TA_LEFT
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import mm
+from reportlab.lib.utils import ImageReader
 from reportlab.platypus import (
     BaseDocTemplate,
     Frame,
     HRFlowable,
+    Image as RLImage,
     KeepTogether,
     NextPageTemplate,
     PageBreak,
@@ -134,6 +136,22 @@ def callout(text: str):
     return t
 
 
+def visual_figure(filename: str, caption: str, max_height=145 * mm):
+    path = ROOT / "output" / "screenshots" / filename
+    reader = ImageReader(str(path))
+    source_width, source_height = reader.getSize()
+    width = 174 * mm
+    height = width * source_height / source_width
+    if height > max_height:
+        height = max_height
+        width = height * source_width / source_height
+    return [
+        RLImage(str(path), width=width, height=height),
+        Paragraph(caption, styles["SmallCustom"]),
+        Spacer(1, 3 * mm),
+    ]
+
+
 def architecture_diagram():
     rows = [
         [P("1. Upload", styles["TableHead"]), P("2. Parse", styles["TableHead"]), P("3. Analyze", styles["TableHead"]), P("4. Return", styles["TableHead"])],
@@ -220,8 +238,20 @@ def build_story():
     story.append(table(demo, [68 * mm, 106 * mm]))
     story.extend([Spacer(1, 4 * mm), Paragraph("Reproduce locally", styles["H2Custom"]), code_block('python run.py\n\n# In another PowerShell window\ncurl.exe -X POST "http://127.0.0.1:8000/analyzeContour?grid_size=100&max_candidates=3" `\n  -F "file=@contour-maps/contours_1m.kml"'), Paragraph("The interactive alternative is http://127.0.0.1:8000/docs: expand POST /analyzeContour, select Try it out, upload the KML, and execute the request.", styles["BodyCustom"])])
 
+    # Visual evidence captured from the running local Swagger UI.
+    story.extend(section("6. Interactive Swagger UI evidence"))
+    story.append(Paragraph("The following screenshots document the complete local demonstration flow. They show the available routes, the selected sample file, and the successful HTTP 200 response returned by the analysis endpoint.", styles["BodyCustom"]))
+    story.append(Paragraph("Usage sequence", styles["H2Custom"]))
+    story.append(Paragraph("Start the service with <b>python run.py</b>, open <b>http://127.0.0.1:8000/docs</b>, expand <b>POST /analyzeContour</b>, choose <b>Try it out</b>, upload <b>contours_1m.kml</b>, and press <b>Execute</b>. The response appears under Server response with status 200.", styles["BodyCustom"]))
+    story.extend(visual_figure("01_swagger_api_overview.png", "Figure 1. Swagger UI overview showing the health check and contour-analysis routes.", max_height=92 * mm))
+    story.append(PageBreak())
+    story.extend(visual_figure("02_swagger_upload_form.png", "Figure 2. Expanded POST /analyzeContour form with the sample KML selected and Execute button ready.", max_height=150 * mm))
+    story.append(PageBreak())
+    story.extend(visual_figure("03_swagger_success_response.png", "Figure 3. Successful HTTP 200 response showing completed analysis, contour statistics, terrain grid, and recommendation JSON.", max_height=68 * mm))
+    story.append(Paragraph("The response can be consumed directly by a frontend map because pond and catchment geometries are returned as WGS84 GeoJSON.", styles["BodyCustom"]))
+
     # Validation and deployment
-    story.extend(section("6. Validation and deployment"))
+    story.extend(section("7. Validation and deployment"))
     story.append(Paragraph("Automated validation", styles["H2Custom"]))
     validation = [[P("Test", styles["TableHead"]), P("Purpose", styles["TableHead"]), P("Result", styles["TableHead"])],
                   [P("Health route", styles["TableBody"]), P("Confirms service responds", styles["TableBody"]), P("Passed", styles["TableBody"])],
@@ -234,7 +264,8 @@ def build_story():
     story.append(Paragraph("After starting Uvicorn, detach from tmux with Ctrl-b then d. Reattach with tmux attach -t pond-api. A reverse proxy or secure tunnel should expose the service using the remote host's public URL. SSH credentials and tokens must remain outside the repository.", styles["BodyCustom"]))
 
     # Limits/future
-    story.extend(section("7. Limitations and future phases"))
+    story.append(PageBreak())
+    story.extend(section("8. Limitations and future phases"))
     story.append(Paragraph("The current result is a terrain-only planning estimate, not a final civil-engineering design. The reported storage estimate uses a conservative compact footprint and depth approximation derived from contour interval. It does not yet model rainfall intensity, runoff coefficient, infiltration, evaporation, land ownership, soil, structures, or field constraints.", styles["BodyCustom"]))
     future = [[P("Future layer", styles["TableHead"]), P("Planned extension", styles["TableHead"])],
               [P("Rainfall", styles["TableBody"]), P("Apply rainfall and runoff coefficients to convert catchment area into seasonal volume scenarios.", styles["TableBody"])],
