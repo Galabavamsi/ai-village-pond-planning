@@ -22,6 +22,38 @@ The service extracts contour geometry and elevation from the uploaded input. It 
 
 No coordinate, location, or result is hard-coded for the supplied sample. The parser supports both KML and KMZ and recognizes elevation in placemark names plus common ExtendedData field names.
 
+## Formulas and algorithm details
+
+The input WGS84 longitude/latitude is converted to local metres around the input center using an equirectangular approximation:
+
+~~~text
+x = R cos(phi0) (lambda - lambda0)
+y = R (phi - phi0)
+~~~
+
+where R = 6,371,000 m. Grid-cell area is A_cell = abs(dx * dy). For each cell, D8 routing selects the lowest strictly lower neighbour:
+
+~~~text
+f(i) = argmin z(n), n in N8(i), z(n) < z(i)
+~~~
+
+Flow accumulation is:
+
+~~~text
+A(i) = A_cell + sum A(k), for all upstream k where f(k) = i
+~~~
+
+The selected catchment is the union of all cells that eventually flow to the pond cell. Its reported area is catchment_area_m2 = geometric_area(catchment) and catchment_area_hectares = catchment_area_m2 / 10,000. Candidate cells are interior cells with accumulation at or above the 85th percentile; they are ranked by descending accumulation and then elevation, with spatial separation between returned candidates.
+
+For this phase, pond storage is a conservative approximation:
+
+~~~text
+pond_depth_m = clamp(2.5 * contour_interval_m, 1, 8)
+storage_m3 = 0.75 * pond_footprint_area_m2 * pond_depth_m
+~~~
+
+The future rainfall extension can use runoff_volume_m3 = rainfall_m * catchment_area_m2 * runoff_coefficient. The current storage value is for screening only and must be replaced by a detailed stage-area-volume design before construction.
+
 ## Demonstration using the supplied contour map
 
 ```bash

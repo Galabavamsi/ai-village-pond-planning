@@ -36,6 +36,58 @@ The same route accepts `.kmz` files and extracts the first `doc.kml` (or first K
 
 This is deliberately terrain-only for phase 2. Rainfall, land ownership, soil, satellite imagery, and field validation can be added as independent layers in later phases.
 
+## Formulas and algorithm details
+
+Let the input KML longitude/latitude be (lambda, phi) in radians and let (lambda0, phi0) be the center of the input extent. The service uses a local equirectangular metric approximation:
+
+~~~text
+x = R * cos(phi0) * (lambda - lambda0)
+y = R * (phi - phi0)
+~~~
+
+where R = 6,371,000 m. If the grid spacing is dx by dy, one cell represents:
+
+~~~text
+A_cell = abs(dx * dy) square metres
+~~~
+
+For every grid cell i, the D8 neighbourhood N8(i) contains up to eight adjacent cells. The flow target is the lowest strictly lower neighbour:
+
+~~~text
+f(i) = argmin[z(n)] for n in N8(i), where z(n) < z(i)
+~~~
+
+If no lower neighbour exists, the cell is treated as a local sink. Flow accumulation is calculated from high cells toward lower cells:
+
+~~~text
+A(i) = A_cell + sum(A(k)) for every upstream cell k where f(k) = i
+~~~
+
+For a selected pond cell p, the catchment is the union of all cells that eventually route to p:
+
+~~~text
+C(p) = union of all upstream cells of p
+catchment_area_m2 = geometric_area(C(p))
+catchment_area_hectares = catchment_area_m2 / 10,000
+~~~
+
+Candidate cells exclude the outer boundary, must have accumulation at or above the 85th percentile of eligible cells, and are ranked by descending accumulation followed by lower elevation. Candidates are spatially separated so the response contains distinct regions.
+
+The current phase uses a conservative planning approximation for pond storage:
+
+~~~text
+pond_depth_m = clamp(2.5 * contour_interval_m, 1, 8)
+storage_m3 = 0.75 * pond_footprint_area_m2 * pond_depth_m
+~~~
+
+The factor 0.75 represents a conservative effective-volume factor. It is not a substitute for a detailed stage-area-volume survey. In a later rainfall phase, runoff volume can be estimated using:
+
+~~~text
+runoff_volume_m3 = rainfall_m * catchment_area_m2 * runoff_coefficient
+~~~
+
+This formula requires rainfall in metres and a locally justified runoff coefficient.
+
 ## API summary
 
 `POST /analyzeContour`
@@ -60,4 +112,3 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 
 Detach with `Ctrl-b`, then `d`; reattach with `tmux attach -t pond-api`. Put a reverse proxy or tunnel in front of port 8000 to obtain the public working API URL. Do not commit SSH credentials, tokens, or private connection details.
-
