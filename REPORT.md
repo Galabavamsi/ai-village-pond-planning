@@ -16,8 +16,11 @@ Remote host route: `POST http://10.1.75.53:8000/analyzeContour`
 
 SSH-tunnel route from the developer PC: `POST http://127.0.0.1:18000/analyzeContour`
 
-Public reverse-proxy URL: **`<deployed public API URL>/analyzeContour`**
+Public evaluator route: `POST https://rate-unable-zope-gcc.trycloudflare.com/analyzeContour`
 
+Public Swagger documentation: **https://rate-unable-zope-gcc.trycloudflare.com/docs**
+
+This is a Cloudflare Quick Tunnel for evaluation. It remains available while the remote `cf-pond2` tmux process and its outbound connection remain alive; the hostname changes if the tunnel is restarted, and Quick Tunnels have no uptime guarantee.
 The route accepts a KML/KMZ file in a multipart field named `file`. Interactive documentation is generated at `/docs`.
 
 ## Catchment estimation approach

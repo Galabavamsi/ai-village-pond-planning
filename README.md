@@ -16,6 +16,14 @@ python run.py
 
 The interactive API documentation is available at <http://127.0.0.1:8000/docs>.
 
+Current public evaluation URL (temporary Cloudflare Quick Tunnel):
+<https://rate-unable-zope-gcc.trycloudflare.com/docs>
+
+The upload route is:
+<https://rate-unable-zope-gcc.trycloudflare.com/analyzeContour>
+
+The public URL remains available while the remote `cf-pond2` tmux tunnel is running. A restart creates a new random hostname.
+
 ## Analyze the supplied sample
 
 ```powershell
@@ -132,4 +140,4 @@ tmux new -s pond-api
 uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 
-Detach with `Ctrl-b`, then `d`; reattach with `tmux attach -t pond-api`. Put a reverse proxy or tunnel in front of port 8000 to obtain the public working API URL. Do not commit SSH credentials, tokens, or private connection details.
+Detach with `Ctrl-b`, then `d`; reattach with `tmux attach -t pond-api`. The current evaluation setup uses a Cloudflare Quick Tunnel in a separate `cf-pond2` tmux session. Put a named tunnel or reverse proxy in front of port 8000 for a stable production URL. Do not commit SSH credentials, tokens, or private connection details.

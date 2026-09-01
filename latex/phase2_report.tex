@@ -91,7 +91,8 @@
 \textcolor{muted}{\small\bfseries VERIFIED API ACCESS}\par
 \code{http://127.0.0.1:18000/docs} (SSH-tunnel view from the developer PC)\par
 \code{http://10.1.75.53:8000/docs} (private remote host, same network only)\par
-\textcolor{muted}{\small Public reverse-proxy URL is not configured in this phase.}\par
+\textbf{\url{https://rate-unable-zope-gcc.trycloudflare.com/docs}} (public evaluator URL)\par
+\textcolor{muted}{\small Temporary Quick Tunnel; URL changes if the tunnel restarts.}\par
 \vspace{2mm}
 \textcolor{muted}{Prepared for Phase 2 submission \hfill 01 September 2026}
 \newpage
@@ -333,7 +334,7 @@ pip install -r requirements.txt
 tmux new -s pond-api
 uvicorn app.main:app --host 0.0.0.0 --port 8000
 \end{lstlisting}
-The remote process is running in tmux session \code{pond-api}. The verified health response reports service status \code{ok} for \code{pond-planning-api}. The developer-PC tunnel exposes the same remote service at \code{http://127.0.0.1:18000}. A reverse proxy or secure tunnel is still required for a public evaluator URL. SSH credentials and tokens must remain outside the repository.
+The remote API is running in tmux session \code{pond-api}; the Cloudflare connector is running separately in \code{cf-pond2}. The verified public evaluator URL is \url{https://rate-unable-zope-gcc.trycloudflare.com/docs}, and \url{https://rate-unable-zope-gcc.trycloudflare.com/health} returns status \code{ok}. The evaluator can upload a file through \url{https://rate-unable-zope-gcc.trycloudflare.com/analyzeContour}. This is a temporary Quick Tunnel: it lasts while the \code{cf-pond2} process and remote host remain available, but Cloudflare provides no uptime guarantee and the hostname changes after restart. SSH credentials and tokens must remain outside the repository.
 
 \newpage
 \reportsection{8. Limitations and future phases}
