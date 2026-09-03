@@ -12,15 +12,15 @@ are rendered as LaTeX mathematics and its conceptual visuals are stored in
 
 Local development route: `POST http://127.0.0.1:8000/analyzeContour`
 
-Remote host route: `POST http://10.1.75.53:8000/analyzeContour`
+Remote host route: `POST http://10.1.75.53:3233/analyzeContour`
 
 SSH-tunnel route from the developer PC: `POST http://127.0.0.1:18000/analyzeContour`
 
-Public evaluator route: `POST https://rate-unable-zope-gcc.trycloudflare.com/analyzeContour`
+Public evaluator route: `POST https://reaching-combine-latest-claire.trycloudflare.com/analyzeContour`
 
-Public Swagger documentation: **https://rate-unable-zope-gcc.trycloudflare.com/docs**
+Public Swagger documentation: **https://reaching-combine-latest-claire.trycloudflare.com/docs**
 
-This is a Cloudflare Quick Tunnel for evaluation. It remains available while the remote `cf-pond2` tmux process and its outbound connection remain alive; the hostname changes if the tunnel is restarted, and Quick Tunnels have no uptime guarantee.
+This is a Cloudflare Quick Tunnel for evaluation. It remains available while the remote `cf-pond` tmux process and its outbound connection remain alive; the hostname changes if the tunnel is restarted, and Quick Tunnels have no uptime guarantee.
 The route accepts a KML/KMZ file in a multipart field named `file`. Interactive documentation is generated at `/docs`.
 
 ## Catchment estimation approach

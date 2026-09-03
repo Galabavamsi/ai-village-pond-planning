@@ -90,8 +90,8 @@
 \vspace{2mm}
 \textcolor{muted}{\small\bfseries VERIFIED API ACCESS}\par
 \code{http://127.0.0.1:18000/docs} (SSH-tunnel view from the developer PC)\par
-\code{http://10.1.75.53:8000/docs} (private remote host, same network only)\par
-\textbf{\url{https://rate-unable-zope-gcc.trycloudflare.com/docs}} (public evaluator URL)\par
+\code{http://10.1.75.53:3233/docs} (private remote host, same network only)\par
+\textbf{\url{https://reaching-combine-latest-claire.trycloudflare.com/docs}} (public evaluator URL)\par
 \textcolor{muted}{\small Temporary Quick Tunnel; URL changes if the tunnel restarts.}\par
 \vspace{2mm}
 \textcolor{muted}{Prepared for Phase 2 submission \hfill 01 September 2026}
@@ -332,9 +332,9 @@ python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 tmux new -s pond-api
-uvicorn app.main:app --host 0.0.0.0 --port 8000
+uvicorn app.main:app --host 0.0.0.0 --port 3233
 \end{lstlisting}
-The remote API is running in tmux session \code{pond-api}; the Cloudflare connector is running separately in \code{cf-pond2}. The verified public evaluator URL is \url{https://rate-unable-zope-gcc.trycloudflare.com/docs}, and \url{https://rate-unable-zope-gcc.trycloudflare.com/health} returns status \code{ok}. The evaluator can upload a file through \url{https://rate-unable-zope-gcc.trycloudflare.com/analyzeContour}. This is a temporary Quick Tunnel: it lasts while the \code{cf-pond2} process and remote host remain available, but Cloudflare provides no uptime guarantee and the hostname changes after restart. SSH credentials and tokens must remain outside the repository.
+The remote API is running in tmux session \code{pond-api} on assigned Application 1 port \code{3233}; the Cloudflare connector is running separately in \code{cf-pond}. The verified \href{https://reaching-combine-latest-claire.trycloudflare.com/docs}{public evaluator URL} is live, and the \href{https://reaching-combine-latest-claire.trycloudflare.com/health}{health endpoint} returns status \code{ok}. The evaluator can upload a file through the \href{https://reaching-combine-latest-claire.trycloudflare.com/analyzeContour}{analysis endpoint}. This is a temporary Quick Tunnel: it lasts while the \code{cf-pond} process and remote host remain available, but Cloudflare provides no uptime guarantee and the hostname changes after restart. SSH credentials and tokens must remain outside the repository.
 
 \newpage
 \reportsection{8. Limitations and future phases}
