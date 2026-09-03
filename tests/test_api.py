@@ -22,7 +22,7 @@ def test_sample_contour_analysis():
     with SAMPLE.open("rb") as source:
         response = client.post(
             "/analyzeContour?grid_size=70&max_candidates=2",
-            files={"file": (SAMPLE.name, source, "application/vnd.google-earth.kml+xml")},
+            files={"contour_map": (SAMPLE.name, source, "application/vnd.google-earth.kml+xml")},
         )
     assert response.status_code == 200, response.text
     body = response.json()
@@ -36,7 +36,7 @@ def test_sample_contour_analysis():
 
 
 def test_rejects_unsupported_format():
-    response = client.post("/analyzeContour", files={"file": ("map.txt", b"hello", "text/plain")})
+    response = client.post("/analyzeContour", files={"contour_map": ("map.txt", b"hello", "text/plain")})
     assert response.status_code == 415
 
 
@@ -46,7 +46,7 @@ def test_sample_kmz_is_supported():
         output.writestr("doc.kml", SAMPLE.read_bytes())
     response = client.post(
         "/analyzeContour?grid_size=50&max_candidates=1",
-        files={"file": ("contours.kmz", archive.getvalue(), "application/vnd.google-earth.kmz")},
+        files={"contour_map": ("contours.kmz", archive.getvalue(), "application/vnd.google-earth.kmz")},
     )
     assert response.status_code == 200, response.text
     assert response.json()["input"]["format"] == "KMZ"

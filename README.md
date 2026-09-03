@@ -31,7 +31,7 @@ the IIT Bhilai local network while the `pond-api` tmux session is running.
 
 ```powershell
 curl.exe -X POST "http://127.0.0.1:8000/analyzeContour?grid_size=100&max_candidates=3" `
-  -F "file=@contour-maps/contours_1m.kml"
+  -F "contour_map=@contour-maps/contours_1m.kml"
 ```
 
 The same route accepts `.kmz` files and extracts the first `doc.kml` (or first KML member) from the archive. `/findCatchment` is provided as a compatibility alias.
@@ -124,7 +124,8 @@ The report's generated image assets are stored in \`output/imagegen/\`.
 
 `POST /analyzeContour`
 
-- Multipart field: `file` — required `.kml` or `.kmz` contour map.
+- Multipart field: `contour_map` — `.kml` or `.kmz` contour map required for evaluation.
+- Compatibility field: `file` — accepted for older clients.
 - Query: `grid_size` (40–220, default 100), `max_candidates` (1–5, default 3).
 - Success: JSON containing input statistics, grid metadata, and ranked `recommendations`.
 - Each recommendation includes a WGS84 `location`, `pond_region`, elevation, estimated pond depth/storage, and a catchment `geometry` with area in square metres/hectares.

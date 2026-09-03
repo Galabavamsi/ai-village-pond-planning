@@ -33,7 +33,14 @@ def health() -> dict[str, str]:
 
 @app.post("/analyzeContour")
 async def analyze_contour(
-    file: Annotated[UploadFile, File(description="A .kml or .kmz contour map")],
+    contour_map: Annotated[
+        UploadFile | None,
+        File(description="A .kml or .kmz contour map; preferred field name"),
+    ] = None,
+    file: Annotated[
+        UploadFile | None,
+        File(description="Legacy upload field; use contour_map for evaluation"),
+    ] = None,
     grid_size: Annotated[
         int,
         Query(
@@ -45,12 +52,19 @@ async def analyze_contour(
     max_candidates: Annotated[int, Query(ge=1, le=5)] = 3,
 ) -> dict:
     """Analyze a contour map and return pond/catchment recommendations."""
-    filename = file.filename or "uploaded-contours"
+    upload = contour_map or file
+    if upload is None:
+        raise HTTPException(
+            status_code=422,
+            detail="Upload a KML/KMZ file using the multipart field 'contour_map'",
+        )
+
+    filename = upload.filename or "uploaded-contours"
     suffix = filename.lower().rsplit(".", 1)[-1] if "." in filename else ""
     if suffix not in {"kml", "kmz"}:
         raise HTTPException(status_code=415, detail="Only .kml and .kmz files are supported")
 
-    payload = await file.read()
+    payload = await upload.read()
     if not payload:
         raise HTTPException(status_code=400, detail="The uploaded file is empty")
     if len(payload) > 75 * 1024 * 1024:
@@ -71,10 +85,16 @@ async def analyze_contour(
 
 @app.post("/findCatchment", include_in_schema=False)
 async def find_catchment(
-    file: Annotated[UploadFile, File(description="A .kml or .kmz contour map")],
+    contour_map: Annotated[
+        UploadFile | None,
+        File(description="A .kml or .kmz contour map; preferred field name"),
+    ] = None,
+    file: Annotated[
+        UploadFile | None,
+        File(description="Legacy upload field; use contour_map for evaluation"),
+    ] = None,
     grid_size: Annotated[int, Query(ge=40, le=220)] = 100,
     max_candidates: Annotated[int, Query(ge=1, le=5)] = 3,
 ) -> dict:
     """Backward-compatible alias for /analyzeContour."""
-    return await analyze_contour(file, grid_size, max_candidates)
-
+    return await analyze_contour(contour_map, file, grid_size, max_candidates)

@@ -127,7 +127,7 @@ The API is structured as an independent analysis service so later phases can add
 \textbf{Requirement} & \textbf{Implementation evidence} & \textbf{Status}\\
 \midrule
 Backend route & \textbf{POST /analyzeContour}; compatibility alias \textbf{/findCatchment}. & Complete\\
-Upload contour map & Multipart upload field \textbf{file}; supports \code{.kml} and \code{.kmz}. & Complete\\
+Upload contour map & Multipart upload field \textbf{contour\_map}; supports \code{.kml} and \code{.kmz}. & Complete\\
 Analyze terrain & Contour parsing, interpolation to an elevation grid, and D8 flow routing. & Complete\\
 Identify pond region & Ranks interior cells with high terrain-derived contributing flow and returns a pond footprint. & Complete\\
 Estimate catchment & Upstream cells are merged into a GeoJSON Polygon or MultiPolygon with area metrics. & Complete\\
@@ -226,7 +226,7 @@ return WGS84 GeoJSON and area/storage metrics
 \begin{lstlisting}
 POST /analyzeContour
 Content-Type: multipart/form-data
-Field: file=<contour-map.kml|contour-map.kmz>
+Field: contour_map=<contour-map.kml|contour-map.kmz>
 \end{lstlisting}
 
 \begin{tabularx}{\linewidth}{@{}p{28mm}p{32mm}X@{}}
@@ -278,7 +278,7 @@ First storage estimate & 4,233.98 \(\mathrm{m^3}\)\\
 \begin{lstlisting}[language=bash]
 python run.py
 curl -X POST "http://127.0.0.1:8000/analyzeContour?grid_size=100&max_candidates=3" \
-  -F "file=@contour-maps/contours_1m.kml"
+  -F "contour_map=@contour-maps/contours_1m.kml"
 \end{lstlisting}
 The interactive alternative is \code{http://127.0.0.1:8000/docs}: expand \textbf{POST /analyzeContour}, select \textbf{Try it out}, upload the KML, and execute the request.
 

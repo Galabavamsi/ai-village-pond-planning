@@ -23,7 +23,10 @@ Evaluator Swagger documentation: **http://10.1.75.53:3233/docs**
 The remote service uses the assigned Application 1 port `3233` derived from SSH
 port `2233`. It is intended to be accessed by evaluators connected to the IIT
 Bhilai local network while the remote `pond-api` tmux session is running.
-The route accepts a KML/KMZ file in a multipart field named `file`. Interactive documentation is generated at `/docs`.
+The route accepts a KML/KMZ file in the multipart field named `contour_map`,
+as required by the evaluation instructions. The legacy field name `file` is
+also accepted for compatibility. Interactive documentation is generated at
+`/docs`.
 
 ## Catchment estimation approach
 
@@ -67,7 +70,7 @@ The future rainfall extension can use runoff_volume_m3 = rainfall_m * catchment_
 
 ```bash
 curl -X POST "http://127.0.0.1:8000/analyzeContour?grid_size=100&max_candidates=3" \
-  -F "file=@contour-maps/contours_1m.kml"
+  -F "contour_map=@contour-maps/contours_1m.kml"
 ```
 
 The JSON response includes:
