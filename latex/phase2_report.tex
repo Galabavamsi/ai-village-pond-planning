@@ -331,9 +331,9 @@ python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 tmux new -s pond-api
-uvicorn app.main:app --host 0.0.0.0 --port 3233
+uvicorn app.main:app --host 0.0.0.0 --port 3000
 \end{lstlisting}
-The remote API is running in tmux session \code{pond-api} on assigned Application 1 port \code{3233}, derived from SSH port \code{2233}. The verified local-network evaluator URL is \code{http://10.1.75.53:3233/docs}; the \href{http://10.1.75.53:3233/health}{health endpoint} returns status \code{ok}, and the \href{http://10.1.75.53:3233/analyzeContour}{file-upload endpoint} accepts the contour map. These URLs are reachable when the evaluator is connected to the IIT Bhilai local network and the \code{pond-api} session remains running. SSH credentials and tokens must remain outside the repository.
+The remote API is running in tmux session \code{pond-api} on Application 1 base port \code{3000}; the IIT system exposes it as external port \code{3233}, derived from SSH port \code{2233}. The verified local-network evaluator URL is \code{http://10.1.75.53:3233/docs}; the \href{http://10.1.75.53:3233/health}{health endpoint} returns status \code{ok}, and the \href{http://10.1.75.53:3233/analyzeContour}{file-upload endpoint} accepts the contour map. These URLs are reachable when the evaluator is connected to the IIT Bhilai local network and the \code{pond-api} session remains running. SSH credentials and tokens must remain outside the repository.
 
 \newpage
 \reportsection{8. Limitations and future phases}

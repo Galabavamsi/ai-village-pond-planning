@@ -141,10 +141,12 @@ python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 tmux new -s pond-api
-uvicorn app.main:app --host 0.0.0.0 --port 3233
+uvicorn app.main:app --host 0.0.0.0 --port 3000
 ```
 
 Detach with `Ctrl-b`, then `d`; reattach with `tmux attach -t pond-api`. The
-current evaluation setup uses assigned Application 1 port 3233, so evaluators
-on the IIT Bhilai local network should use `http://10.1.75.53:3233/docs`.
+current evaluation setup runs Application 1 inside the container on base port
+3000; the IIT system maps it to assigned external port 3233 derived from SSH
+port 2233. Evaluators on the IIT Bhilai local network should use
+`http://10.1.75.53:3233/docs`.
 Do not commit SSH credentials, tokens, or private connection details.

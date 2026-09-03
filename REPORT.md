@@ -20,9 +20,11 @@ Evaluator route on the IIT Bhilai local network: `POST http://10.1.75.53:3233/an
 
 Evaluator Swagger documentation: **http://10.1.75.53:3233/docs**
 
-The remote service uses the assigned Application 1 port `3233` derived from SSH
-port `2233`. It is intended to be accessed by evaluators connected to the IIT
-Bhilai local network while the remote `pond-api` tmux session is running.
+The service runs inside the allocated container on Application 1 base port
+`3000`; the IIT system exposes that service as external port `3233`, derived
+from SSH port `2233`. It is intended to be accessed by evaluators connected to
+the IIT Bhilai local network while the remote `pond-api` tmux session is
+running.
 The route accepts a KML/KMZ file in the multipart field named `contour_map`,
 as required by the evaluation instructions. The legacy field name `file` is
 also accepted for compatibility. Interactive documentation is generated at
