@@ -16,11 +16,13 @@ Remote host route: `POST http://10.1.75.53:3233/analyzeContour`
 
 SSH-tunnel route from the developer PC: `POST http://127.0.0.1:18000/analyzeContour`
 
-Public evaluator route: `POST https://reaching-combine-latest-claire.trycloudflare.com/analyzeContour`
+Evaluator route on the IIT Bhilai local network: `POST http://10.1.75.53:3233/analyzeContour`
 
-Public Swagger documentation: **https://reaching-combine-latest-claire.trycloudflare.com/docs**
+Evaluator Swagger documentation: **http://10.1.75.53:3233/docs**
 
-This is a Cloudflare Quick Tunnel for evaluation. It remains available while the remote `cf-pond` tmux process and its outbound connection remain alive; the hostname changes if the tunnel is restarted, and Quick Tunnels have no uptime guarantee.
+The remote service uses the assigned Application 1 port `3233` derived from SSH
+port `2233`. It is intended to be accessed by evaluators connected to the IIT
+Bhilai local network while the remote `pond-api` tmux session is running.
 The route accepts a KML/KMZ file in a multipart field named `file`. Interactive documentation is generated at `/docs`.
 
 ## Catchment estimation approach

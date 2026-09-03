@@ -90,9 +90,8 @@
 \vspace{2mm}
 \textcolor{muted}{\small\bfseries VERIFIED API ACCESS}\par
 \code{http://127.0.0.1:18000/docs} (SSH-tunnel view from the developer PC)\par
-\code{http://10.1.75.53:3233/docs} (private remote host, same network only)\par
-\textbf{\url{https://reaching-combine-latest-claire.trycloudflare.com/docs}} (public evaluator URL)\par
-\textcolor{muted}{\small Temporary Quick Tunnel; URL changes if the tunnel restarts.}\par
+\textbf{\code{http://10.1.75.53:3233/docs}} (IIT Bhilai local-network evaluator URL)\par
+\textcolor{muted}{\small Assigned Application 1 port derived from SSH port 2233.}\par
 \vspace{2mm}
 \textcolor{muted}{Prepared for Phase 2 submission \hfill 01 September 2026}
 \newpage
@@ -334,7 +333,7 @@ pip install -r requirements.txt
 tmux new -s pond-api
 uvicorn app.main:app --host 0.0.0.0 --port 3233
 \end{lstlisting}
-The remote API is running in tmux session \code{pond-api} on assigned Application 1 port \code{3233}; the Cloudflare connector is running separately in \code{cf-pond}. The verified \href{https://reaching-combine-latest-claire.trycloudflare.com/docs}{public evaluator URL} is live, and the \href{https://reaching-combine-latest-claire.trycloudflare.com/health}{health endpoint} returns status \code{ok}. The evaluator can upload a file through the \href{https://reaching-combine-latest-claire.trycloudflare.com/analyzeContour}{analysis endpoint}. This is a temporary Quick Tunnel: it lasts while the \code{cf-pond} process and remote host remain available, but Cloudflare provides no uptime guarantee and the hostname changes after restart. SSH credentials and tokens must remain outside the repository.
+The remote API is running in tmux session \code{pond-api} on assigned Application 1 port \code{3233}, derived from SSH port \code{2233}. The verified local-network evaluator URL is \code{http://10.1.75.53:3233/docs}; the \href{http://10.1.75.53:3233/health}{health endpoint} returns status \code{ok}, and the \href{http://10.1.75.53:3233/analyzeContour}{file-upload endpoint} accepts the contour map. These URLs are reachable when the evaluator is connected to the IIT Bhilai local network and the \code{pond-api} session remains running. SSH credentials and tokens must remain outside the repository.
 
 \newpage
 \reportsection{8. Limitations and future phases}
