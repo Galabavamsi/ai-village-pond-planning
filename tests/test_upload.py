@@ -159,3 +159,41 @@ def test_every_shipped_real_contour_kml_uploads_and_analyzes(monkeypatch):
         assert analyzed.status_code == 200, (path.name, analyzed.text)
         sites = analyzed.json()["recommendations"]
         assert sites and all(site["pond"]["screening_storage_m3"] > 0 for site in sites), path.name
+
+
+def test_smooth_contour_grid_removes_terraces_without_overshoot():
+    import numpy as np
+
+    from app.terrain import _grid_from_contours, parse_contours
+
+    path = Path(__file__).resolve().parents[1] / "contour-maps" / "real" / "kanker-west_glo30.kml"
+    contours = parse_contours(path.read_bytes(), path.name)
+    interval = float(np.median(np.diff(np.unique(contours.elevations))))
+
+    def flat_share(dem):
+        gy, gx = np.gradient(dem)
+        return float(np.mean(np.hypot(gx, gy) < 1e-3))
+
+    *_, linear, _, _ = _grid_from_contours(contours, 120)
+    *_, smooth, _, _ = _grid_from_contours(contours, 120, smooth=True)
+    assert flat_share(linear) > 0.1 > 0.05 > flat_share(smooth)
+    assert np.all(np.abs(smooth - linear) <= interval + 1e-6)
+    assert smooth.min() >= min(contours.elevations) - interval
+    assert smooth.max() <= max(contours.elevations) + interval
+
+
+def test_alternative_sites_use_distinct_drainage_lines(monkeypatch):
+    monkeypatch.setattr("app.planning.water_screening", lambda *args: WaterScreening(
+        None, "unavailable", 0, 40.0, "offline test",
+    ))
+    path = Path(__file__).resolve().parents[1] / "contour-maps" / "real" / "kanker-west_glo30.kml"
+    dataset = client.post("/api/terrain-upload", files={"contour_map": (path.name, path.read_bytes())}).json()
+    body = client.post("/api/analyze-area", json={
+        "area": inset(dataset["bounds"], 0.08), "source": "upload", "dataset_id": dataset["dataset_id"],
+        "rainfall_source": "manual", "rainfall_mm": 1200,
+    }).json()
+    catchments = [shape(site["catchment"]["geometry"]) for site in body["recommendations"]]
+    assert len(catchments) == 3
+    for index, first in enumerate(catchments):
+        for second in catchments[index + 1:]:
+            assert first.intersection(second).area <= 0.6 * min(first.area, second.area)

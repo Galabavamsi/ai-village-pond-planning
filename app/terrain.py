@@ -161,7 +161,17 @@ def parse_contours(payload: bytes, filename: str) -> ContourPointSet:
     return ContourPointSet(np.asarray(rows, dtype=float), features, elevations)
 
 
-def _grid_from_contours(contours: ContourPointSet, requested_size: int):
+def _grid_from_contours(contours: ContourPointSet, requested_size: int, smooth: bool = False):
+    """Interpolate contour vertices to a regular metric grid.
+
+    Linear (TIN) interpolation leaves flat terraces wherever a triangle's three
+    vertices lie on one contour, e.g. hilltops and valley floors; with coarse
+    intervals a fifth of the cells can be flat. ``smooth`` uses a C1
+    Clough-Tocher surface instead, bounded to one contour interval of the
+    linear surface: between drawn contours the ground cannot cross another
+    contour level, so the bound removes overshoot without inventing relief.
+    The Phase 2 route keeps the linear surface for reproducibility.
+    """
     lon = contours.points[:, 0]
     lat = contours.points[:, 1]
     lon0, lat0 = float(lon.mean()), float(lat.mean())
@@ -185,6 +195,12 @@ def _grid_from_contours(contours: ContourPointSet, requested_size: int):
         samples, values = samples[keep], values[keep]
     try:
         dem = griddata(samples, values, (xx, yy), method="linear")
+        if smooth:
+            levels = np.unique(np.round(values, 3))
+            interval = float(np.median(np.diff(levels))) if len(levels) > 1 else 0.0
+            cubic = griddata(samples, values, (xx, yy), method="cubic")
+            usable = np.isfinite(cubic) & np.isfinite(dem)
+            dem[usable] = np.clip(cubic[usable], dem[usable] - interval, dem[usable] + interval)
     except (QhullError, ValueError) as exc:
         raise AnalysisError("Contour lines must cover a two-dimensional area, not a single line") from exc
     missing = np.isnan(dem)

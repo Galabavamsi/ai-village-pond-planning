@@ -68,12 +68,13 @@ class ElevationGrid:
 @lru_cache(maxsize=1)
 def sample_grid() -> ElevationGrid:
     contours = parse_contours(SAMPLE.read_bytes(), SAMPLE.name)
-    xx, yy, dem, lon0, lat0 = _grid_from_contours(contours, 125)
+    xx, yy, dem, lon0, lat0 = _grid_from_contours(contours, 125, smooth=True)
     return ElevationGrid(
         xx[0, :], yy[:, 0], dem, lon0, lat0,
         "Supplied contours, Khapri near IIT Bhilai (1 m interval)",
         float(np.median(np.diff(xx[0, :]))),
-        ["Elevation between the supplied contours is linearly interpolated; the grid is not a measured DEM.",
+        ["Elevation between the supplied contours is interpolated with a smooth surface bounded to one contour "
+         "interval; the grid is not a measured DEM.",
          "The supplied KML has the structure of a Contour Map Generator export, which traces ~30 m satellite "
          "elevation; its 1 m interval is finer than that source's real precision, so treat it as DEM-derived."],
     )
@@ -131,12 +132,13 @@ def register_uploaded_contours(payload: bytes, filename: str) -> dict:
     if span > 20_000:
         raise AnalysisError("Uploaded contours span more than 20 km; split the survey into smaller maps")
     requested_size = min(220, max(100, math.ceil(span / 25)))
-    xx, yy, dem, lon0, lat0 = _grid_from_contours(contours, requested_size)
+    xx, yy, dem, lon0, lat0 = _grid_from_contours(contours, requested_size, smooth=True)
     grid = ElevationGrid(
         xx[0, :], yy[:, 0], dem, lon0, lat0,
         f"Uploaded contours · {filename}",
         float(np.median(np.diff(xx[0, :]))),
-        ["Elevation between uploaded contour lines is interpolated. Areas outside their convex hull use nearest-value extrapolation."],
+        ["Elevation between uploaded contour lines is interpolated with a smooth surface bounded to one contour "
+         "interval. Areas outside their convex hull use nearest-value extrapolation."],
     )
     item = save_upload(
         filename=filename, grid=grid, bounds=grid_bounds(grid),
@@ -502,14 +504,23 @@ def _screen_and_rank(polygon, geometry, grid, source, screen_future, rain_future
     # Best illustrative collectable volume first; then storage per metre of
     # embankment (less earthwork for the same water); then larger catchment.
     evaluated.sort(key=lambda item: (-round(item["capturable"], 1), -item["efficiency"], -item["area"]))
+    # Three distinct alternatives: never overlapping ponds, and preferably not
+    # two outlets on the same drainage line (catchments sharing > 60 %).
     chosen, used = [], np.zeros(rows * cols, dtype=bool)
-    for item in evaluated:
-        if used[item["pond"].cells].any():
-            continue
-        chosen.append(item)
-        used[item["pond"].cells] = True
-        if len(chosen) == 3:
-            break
+    for require_distinct in (True, False):
+        for item in evaluated:
+            if len(chosen) == 3:
+                break
+            if any(item is other for other in chosen) or used[item["pond"].cells].any():
+                continue
+            if require_distinct and any(
+                np.count_nonzero(item["catchment_mask"] & other["catchment_mask"])
+                > 0.6 * min(len(item["catchment"]), len(other["catchment"]))
+                for other in chosen
+            ):
+                continue
+            chosen.append(item)
+            used[item["pond"].cells] = True
 
     recommendations = []
     for rank, item in enumerate(chosen, start=1):
