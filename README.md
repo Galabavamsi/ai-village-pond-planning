@@ -263,16 +263,19 @@ June–September.
 
 ## Phase 2 API and prior submission
 
-## Planned IIT Bhilai local-network evaluation (not deployed now)
+## IIT Bhilai deployment (live on the campus network)
 
-The evaluator-facing URL is:
-<http://10.1.75.53:3233/docs>
+Deployed on 28 September 2026 to sys1 (SSH port 2233 → Application 1 port
+3233) and verified from the campus network:
 
-The upload route is:
-<http://10.1.75.53:3233/analyzeContour>
+- Planner: <http://10.1.75.53:3233/>
+- API docs: <http://10.1.75.53:3233/docs>
+- Phase 2 upload route: <http://10.1.75.53:3233/analyzeContour>
 
-This is the assigned Application 1 port mapping. It is **not the current local
-app URL**; deploy and verify it from the IIT Bhilai network at submission time.
+The addresses are private campus IPs and work only on the IIT Bhilai network
+(or its VPN). Some campus Wi-Fi links drop a share of new connections to this
+host; the front end retries API calls, and a page that fails to load the first
+time loads on refresh.
 
 ## Analyze the supplied sample
 
@@ -381,21 +384,30 @@ Errors use standard HTTP status codes: 415 for unsupported extensions, 413 for f
 
 ## Remote deployment with tmux
 
-After pushing this repository to GitHub and cloning it on the remote host:
+The container has Python 3.12 but no Node and unreliable outbound DNS/HTTPS,
+so everything is built on a workstation and copied over SSH:
 
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-cd frontend
-npm ci && npm run build
-cd ..
-tmux new -s pond-api
-uvicorn app.main:app --host 0.0.0.0 --port 3000
-```
+1. Build locally: `npm run build` in `frontend/`, run
+   `python scripts/prewarm_cache.py`, and download Linux wheels:
+   `pip download -d wheelhouse --only-binary=:all: --platform manylinux_2_28_x86_64 --platform manylinux2014_x86_64 --python-version 3.12 --implementation cp -r requirements.txt pip uvloop`
+   (add `uvloop` explicitly: pip on Windows skips Linux-only dependencies).
+2. Copy the repository (`git archive HEAD`), `frontend/dist`, `cache/` and the
+   wheelhouse to `~/ai-village-pond-planning` and `~/wheelhouse`. The
+   container's SFTP is restricted; stream files with `ssh host "cat > file"`.
+3. On the container:
 
-Detach with `Ctrl-b`, then `d`; reattach with `tmux attach -t pond-api`. The
-IIT system maps internal port 3000 to assigned external port 3233 derived
-from SSH port 2233. Re-test both the app root and `/docs` from the campus
-network after deployment; the remote URL is not claimed to be live now.
-Do not commit SSH credentials, tokens, or private connection details.
+   ```bash
+   cd ~/ai-village-pond-planning
+   python3 -m venv --without-pip .venv
+   .venv/bin/python ../wheelhouse/pip-*.whl/pip install --no-index --find-links ../wheelhouse pip
+   .venv/bin/pip install --no-index --find-links ../wheelhouse -r requirements.txt
+   .venv/bin/python -m pytest -q
+   tmux new-session -d -s pond-app "bash ~/ai-village-pond-planning/scripts/run_server.sh"
+   ```
+
+`scripts/run_server.sh` serves on `0.0.0.0:3000`, restarts the app if it
+exits, and logs to `logs/app.log`. Reattach with `tmux attach -t pond-app`.
+To update, copy the changed files and stop the Python process listening on
+port 3000; the loop restarts it. Test the root, `/docs`, an analysis and an
+upload from the campus network afterwards. Do not commit SSH credentials,
+tokens, or private connection details.

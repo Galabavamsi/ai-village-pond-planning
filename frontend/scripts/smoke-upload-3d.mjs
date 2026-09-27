@@ -1,7 +1,10 @@
 import { chromium } from 'playwright-core'
+
 import { createHash } from 'node:crypto'
 import { mkdir } from 'node:fs/promises'
 import { resolve } from 'node:path'
+// Target another deployment with POND_URL, e.g. http://10.1.75.53:3233/
+const BASE_URL = process.env.POND_URL ?? 'http://127.0.0.1:8000/'
 
 const browser = await chromium.launch({
   headless: true,
@@ -24,7 +27,11 @@ async function exercise(name, viewport) {
       analysisResponses.push({ status: response.status(), body: await response.json() })
     }
   })
-  await page.goto('http://127.0.0.1:8000/', { waitUntil: 'domcontentloaded' })
+  // Lossy campus links can drop the first connection; retry the initial load.
+  for (let attempt = 1; ; attempt++) {
+    try { await page.goto(BASE_URL, { waitUntil: 'domcontentloaded', timeout: 60000 }); break }
+    catch (error) { if (attempt === 4) throw error; await page.waitForTimeout(2000) }
+  }
   if (!(await page.title()).includes('Village Pond')) throw new Error('Unexpected page title')
   if (name === 'mobile') await page.getByRole('button', { name: 'Open study area controls' }).click()
   await page.locator('input[type=file]').setInputFiles(sampleFile)
@@ -80,7 +87,11 @@ async function exerciseIndependentContours() {
   page.on('response', async (response) => {
     if (response.url().endsWith('/api/analyze-area')) analysis = { status: response.status(), body: await response.json() }
   })
-  await page.goto('http://127.0.0.1:8000/', { waitUntil: 'domcontentloaded' })
+  // Lossy campus links can drop the first connection; retry the initial load.
+  for (let attempt = 1; ; attempt++) {
+    try { await page.goto(BASE_URL, { waitUntil: 'domcontentloaded', timeout: 60000 }); break }
+    catch (error) { if (attempt === 4) throw error; await page.waitForTimeout(2000) }
+  }
   await page.locator('input[type=file]').setInputFiles(independentFile)
   await page.getByText(/73 contour lines/).waitFor({ state: 'attached', timeout: 30000 })
   await page.getByRole('button', { name: 'Enter rainfall' }).click()

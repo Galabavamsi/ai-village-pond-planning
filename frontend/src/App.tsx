@@ -26,6 +26,7 @@ import {
   X,
 } from "lucide-react";
 import MapCanvas from "./MapCanvas";
+import { apiFetch } from "./api";
 import PlaceSearch, { type Place } from "./PlaceSearch";
 import ResultsPanel, { compact } from "./ResultsPanel";
 import { downloadContourKml } from "./exporters";
@@ -154,7 +155,7 @@ export default function App() {
   const flyTo = (bounds: Bounds) => setFocus({ bounds, key: ++focusKey.current });
 
   useEffect(() => {
-    fetch("/api/config")
+    apiFetch("/api/config")
       .then(async (response) => {
         if (!response.ok) throw new Error("Could not reach the analysis server.");
         return response.json() as Promise<Config>;
@@ -241,7 +242,7 @@ export default function App() {
     try {
       const form = new FormData();
       form.append("contour_map", file);
-      const response = await fetch("/api/terrain-upload", { method: "POST", body: form });
+      const response = await apiFetch("/api/terrain-upload", { method: "POST", body: form });
       const body = await response.json();
       if (!response.ok) throw new Error(typeof body.detail === "string" ? body.detail : "Could not read the contour file.");
       const dataset = body as UploadedDataset;
@@ -279,7 +280,7 @@ export default function App() {
     setError(null);
     setControlsOpen(false);
     try {
-      const response = await fetch("/api/analyze-area", {
+      const response = await apiFetch("/api/analyze-area", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

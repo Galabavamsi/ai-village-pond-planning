@@ -1,5 +1,6 @@
 import type { Geometry, MultiPolygon, Polygon, Position } from "geojson";
 import type { Analysis } from "./types";
+import { apiFetch } from "./api";
 
 const number = (value: number, digits = 0) => new Intl.NumberFormat("en-IN", { maximumFractionDigits: digits }).format(value);
 
@@ -93,7 +94,7 @@ ${sites.join("\n")}
 }
 
 export async function downloadContourKml(body: { area: Polygon; source: string; dataset_id: string | null }) {
-  const response = await fetch("/api/export/contours.kml", {
+  const response = await apiFetch("/api/export/contours.kml", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),

@@ -1,6 +1,9 @@
 // Visual walkthrough of the Phase 3.1 planner; writes screenshots to tmp/shots.
 import { chromium } from 'playwright-core'
+
 import { resolve } from 'node:path'
+// Target another deployment with POND_URL, e.g. http://10.1.75.53:3233/
+const BASE_URL = process.env.POND_URL ?? 'http://127.0.0.1:8000/'
 
 const out = resolve('..', 'tmp', 'shots')
 const browser = await chromium.launch({ headless: true, executablePath: 'C:/Program Files/Google/Chrome/Application/chrome.exe', args: ['--no-sandbox'] })
@@ -11,7 +14,17 @@ page.on('console', (message) => { if (message.type() === 'error') problems.push(
 const shot = (name) => page.screenshot({ path: resolve(out, `${name}.png`) })
 const results = () => page.locator('.site-table').waitFor({ state: 'visible', timeout: 90000 })
 
-await page.goto('http://127.0.0.1:8000/', { waitUntil: 'domcontentloaded' })
+process.on('uncaughtException', async (error) => {
+  await page.screenshot({ path: resolve(out, 'failure.png') }).catch(() => {})
+  const message = await page.locator('.error-message, .map-notice').allInnerTexts().catch(() => [])
+  console.error('walkthrough failed:', error.message.split('\n')[0], '| on-page messages:', message, '| problems:', problems)
+  process.exit(1)
+})
+// Lossy campus links can drop the first connection; retry the initial load.
+for (let attempt = 1; ; attempt++) {
+  try { await page.goto(BASE_URL, { waitUntil: 'domcontentloaded', timeout: 60000 }); break }
+  catch (error) { if (attempt === 4) throw error; await page.waitForTimeout(2000) }
+}
 await page.locator('.map-canvas[data-ready="true"]').waitFor({ timeout: 30000 })
 await page.waitForTimeout(2500)
 await shot('01-start')

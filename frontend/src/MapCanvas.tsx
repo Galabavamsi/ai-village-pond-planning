@@ -11,6 +11,7 @@ import {
 } from "terra-draw";
 import { TerraDrawMapLibreGLAdapter } from "terra-draw-maplibre-gl-adapter";
 import { BASEMAPS, TERRAIN_TILES, basemapById } from "./basemaps";
+import { apiFetch } from "./api";
 import type { Analysis, Basemap, ContourCollection, DrawMode, MapFocus } from "./types";
 
 interface Props {
@@ -318,7 +319,7 @@ export default function MapCanvas({
     setData(map, "contours-survey", empty);
     if (!contourUrl) return;
     const controller = new AbortController();
-    fetch(contourUrl, { signal: controller.signal })
+    apiFetch(contourUrl, { signal: controller.signal })
       .then((response) => (response.ok ? response.json() : null))
       .then((data: FeatureCollection | null) => { if (data) setData(map, "contours-survey", data); })
       .catch(() => { /* contours are optional visual context */ });

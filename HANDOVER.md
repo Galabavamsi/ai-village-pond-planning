@@ -5,9 +5,9 @@ Status checked on **27 September 2026** in `D:\ai village planning`
 
 ## What works now
 
-The planner runs locally at <http://127.0.0.1:8000/> (FastAPI serving the built
-React front end; `/docs` and `/health` return 200). `127.0.0.1` is **not** an
-evaluator-facing URL.
+The planner is **live on the IIT network at <http://10.1.75.53:3233/>** (API docs
+at `/docs`; see "Git and deployment state"). Locally it runs at
+<http://127.0.0.1:8000/>, which is **not** an evaluator-facing URL.
 
 A user can search for a place or pick a curated example area, draw a polygon
 or rectangle, and analyze it with the supplied Khapri contour map (next to IIT Bhilai), an
@@ -69,34 +69,42 @@ Set-Location ..
 & .\.venv\Scripts\python.exe run.py
 ```
 
-At this handover: 27 backend tests, the production build, both smoke scripts
+At this handover: 32 backend tests, the production build, both smoke scripts
 (desktop + mobile) and the walkthrough passed with no browser errors. The venv
 was created with `uv` and has no pip; use
 `uv pip install --python .venv\Scripts\python.exe -r requirements.txt`.
 
 ## Git and deployment state
 
-- Branch `master`; `origin` is
-  <https://github.com/Galabavamsi/ai-village-pond-planning.git>; last commit
-  `f687899`. All Phase 3 work, including this review, is **uncommitted**. A
-  pre-review snapshot is in `tmp/backup/` (ignored by Git).
-- Not yet deployed to the IIT host. Prior mapping: internal port `3000` →
-  external `3233`. The server now also needs outbound HTTPS to
-  `planetarycomputer.microsoft.com`, `data.chc.ucsb.edu`, the Overpass servers,
-  and (in the browser) tile, terrain and Photon hosts. Check these from the
-  campus network. Never commit credentials.
+- GitHub `master` is up to date with this work (commits `af86e61` onward).
+- **Deployed and verified on 28 September 2026** at <http://10.1.75.53:3233/>
+  (`/docs`, `/analyzeContour`) on sys1, SSH port 2233, in tmux session
+  `pond-app` running `scripts/run_server.sh` (internal port 3000, logs in
+  `~/ai-village-pond-planning/logs/app.log`). All 32 tests pass on the server;
+  the browser walkthrough and upload/3D smoke suites pass against the live URL
+  (`POND_URL=http://10.1.75.53:3233/ node scripts/walkthrough.mjs`).
+- sys1 was cleaned at the user's request: the graded lab6 load balancer and all
+  old lab/Phase 2 files and tool caches were removed.
+- **Network caveats found during deployment:**
+  - The container's DNS (1.1.1.1/8.8.8.8) drops lookups at random, taking
+    ~20 s per failure. The app keeps the last good answers and retries remote
+    reads.
+  - Example areas are pre-cached in `cache/`, so they need no outbound
+    access.
+  - A new area takes about 3–25 s on the server.
+  - From campus Wi-Fi (10.50.x) about half of new TCP connections to
+    10.1.75.53 are dropped. From inside the server network they all succeed.
+    The front end retries API calls; if the first page load fails, refresh.
+    Use wired LAN for the demo video if possible.
+- The server has no Node and no reliable PyPI access; see README "Remote
+  deployment with tmux" for the offline wheelhouse procedure.
 
 ## Remaining submission work
 
-1. Review and commit/push the intended files (keep `.venv`, `node_modules`,
-   `tmp/` and credentials out).
-2. Deploy one Uvicorn process in `tmux` on the IIT system (`--host 0.0.0.0
-   --port 3000`); verify `:3233`, `/docs`, upload, analysis and 3D **from the
-   IIT network**.
-3. Phase 3 report in the supplied template (≤ 10 pages) with real screenshots,
+1. Phase 3 report in the supplied template (≤ 10 pages) with real screenshots,
    the v4 method and limitations, GitHub URL and verified front-end URL. The
    PDF in `output/pdf/` is Phase 2 only.
-4. Public demo video (≤ 5 minutes): example area → analyze → satellite/3D →
+2. Public demo video (≤ 5 minutes): example area → analyze → satellite/3D →
    compare sites → export KML to Google Earth; explain why numbers are
    screening estimates.
 

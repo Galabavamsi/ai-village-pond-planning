@@ -1,6 +1,9 @@
 import { chromium } from 'playwright-core'
+
 import { mkdir } from 'node:fs/promises'
 import { resolve } from 'node:path'
+// Target another deployment with POND_URL, e.g. http://10.1.75.53:3233/
+const BASE_URL = process.env.POND_URL ?? 'http://127.0.0.1:8000/'
 
 const browser = await chromium.launch({
   headless: true,
@@ -20,7 +23,7 @@ async function runViewport(name, viewport) {
   page.on('response', (response) => {
     if (response.url().includes('opentopomap')) tileResponses.push(response.status())
   })
-  await page.goto('http://127.0.0.1:8000/', { waitUntil: 'domcontentloaded' })
+  await page.goto(BASE_URL, { waitUntil: 'domcontentloaded' })
   const analyzeButton = name === 'mobile' ? page.locator('.mobile-analyze-bar button') : page.locator('.analyze-button')
   await analyzeButton.waitFor({ state: 'visible' })
   await page.waitForTimeout(1200)
