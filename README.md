@@ -349,7 +349,22 @@ runoff_volume_m3 = rainfall_m * catchment_area_m2 * runoff_coefficient
 
 This formula requires rainfall in metres and a locally justified runoff coefficient.
 
-## Build the submission report
+## Build the Phase 3 report
+
+`output/pdf/AI_Village_Pond_Planning_Phase_3_Report.pdf` (24 pages) is built
+from `latex/phase3_report.tex` with the figures in `latex/figures/`
+(JPEG copies of screenshots taken from the live deployment by
+`POND_URL=http://10.1.75.53:3233/ node frontend/scripts/report-shots.mjs`).
+It uses only standard packages, so it also compiles on Overleaf.
+
+```powershell
+New-Item -ItemType Directory -Force tmp\latex-build | Out-Null
+pdflatex -interaction=nonstopmode -output-directory tmp\latex-build latex\phase3_report.tex
+pdflatex -interaction=nonstopmode -output-directory tmp\latex-build latex\phase3_report.tex
+Copy-Item -Force tmp\latex-build\phase3_report.pdf output\pdf\AI_Village_Pond_Planning_Phase_3_Report.pdf
+```
+
+## Build the Phase 2 submission report
 
 The submitted PDF is generated from the LaTeX source at
 `latex/phase2_report.tex`. It contains the equations as rendered mathematical

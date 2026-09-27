@@ -101,9 +101,15 @@ was created with `uv` and has no pip; use
 
 ## Remaining submission work
 
-1. Phase 3 report in the supplied template (≤ 10 pages) with real screenshots,
-   the v4 method and limitations, GitHub URL and verified front-end URL. The
-   PDF in `output/pdf/` is Phase 2 only.
+1. Phase 3 report: **drafted** at
+   `output/pdf/AI_Village_Pond_Planning_Phase_3_Report.pdf` (24 pages, source
+   `latex/phase3_report.tex`, live screenshots, AI-use disclosure in
+   Section 12). Before submitting:
+   - add team names and roll numbers;
+   - confirm or extend the AI-use disclosure for any tools used before
+     27 September;
+   - if the template's 10-page limit applies, move Sections 2–13 into the
+     template and cut or shorten the appendices and figures.
 2. Public demo video (≤ 5 minutes): example area → analyze → satellite/3D →
    compare sites → export KML to Google Earth; explain why numbers are
    screening estimates.
