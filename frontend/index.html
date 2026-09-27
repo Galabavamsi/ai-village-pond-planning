@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f7f8f6" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="description" content="Explore terrain-derived pond sites, catchments, and rainfall scenarios for village water planning." />
+    <title>Village Pond Planner · Terrain & water</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+      window.addEventListener('error', (event) => {
+        const root = document.getElementById('root')
+        if (root && !root.firstChild) root.textContent = `Application error: ${event.message || event.target?.src || 'resource could not load'}`
+      }, true)
+      window.addEventListener('unhandledrejection', (event) => {
+        const root = document.getElementById('root')
+        if (root && !root.firstChild) root.textContent = `Application error: ${event.reason}`
+      })
+    </script>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

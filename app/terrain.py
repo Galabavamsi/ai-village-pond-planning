@@ -11,6 +11,7 @@ from typing import Iterable
 
 import numpy as np
 from scipy.interpolate import griddata
+from scipy.spatial import QhullError
 from shapely.geometry import Polygon, box, mapping, shape
 from shapely.ops import unary_union
 
@@ -18,6 +19,8 @@ from shapely.ops import unary_union
 KML_NS = "http://www.opengis.net/kml/2.2"
 NS = {"k": KML_NS}
 EARTH_RADIUS_M = 6_371_000.0
+MAX_KML_BYTES = 40 * 1024 * 1024
+MAX_CONTOUR_POINTS = 350_000
 
 
 class AnalysisError(ValueError):
@@ -54,6 +57,10 @@ def _geojson_geometry(geom, lon0: float, lat0: float) -> dict:
 
 
 def _parse_coordinates(text: str | None) -> list[tuple[float, float]]:
+    return [(lon, lat) for lon, lat, _ in _parse_coordinate_tuples(text)]
+
+
+def _parse_coordinate_tuples(text: str | None) -> list[tuple[float, float, float | None]]:
     if not text:
         return []
     points = []
@@ -62,26 +69,43 @@ def _parse_coordinates(text: str | None) -> list[tuple[float, float]]:
         if len(parts) < 2:
             continue
         try:
-            points.append((float(parts[0]), float(parts[1])))
+            lon, lat = float(parts[0]), float(parts[1])
+            altitude = float(parts[2]) if len(parts) > 2 and parts[2] else None
         except ValueError:
             continue
+        if not (math.isfinite(lon) and math.isfinite(lat) and -180 <= lon <= 180 and -85 <= lat <= 85):
+            continue
+        if altitude is not None and not math.isfinite(altitude):
+            altitude = None
+        points.append((lon, lat, altitude))
     return points
 
 
-def _elevation_for_placemark(pm: ET.Element) -> float | None:
-    # Most contour generators put the level in <name>; ExtendedData is supported
-    # as a fallback for other providers.
+def _elevation_for_placemark(pm: ET.Element, line: ET.Element | None = None) -> float | None:
+    # Prefer typed attributes or absolute coordinate altitude over a generic
+    # placemark name, which may contain an unrelated identifier.
     candidates = []
-    name = pm.find("k:name", NS)
-    if name is not None and name.text:
-        candidates.append(name.text)
     candidates.extend(
         item.text or ""
         for item in pm.findall(".//k:SimpleData", NS)
         if item.attrib.get("name", "").lower() in {"elevation", "elev", "z", "height", "level"}
     )
+    candidates.extend(
+        item.findtext("k:value", default="", namespaces=NS)
+        for item in pm.findall(".//k:Data", NS)
+        if item.attrib.get("name", "").lower() in {"elevation", "elev", "z", "height", "level"}
+    )
     for value in candidates:
         match = re.search(r"[-+]?\d+(?:\.\d+)?", value)
+        if match:
+            return float(match.group(0))
+    if line is not None and line.findtext("k:altitudeMode", default="", namespaces=NS) == "absolute":
+        altitudes = [alt for _, _, alt in _parse_coordinate_tuples(line.findtext("k:coordinates", namespaces=NS)) if alt is not None]
+        if len(altitudes) >= 2 and max(altitudes) - min(altitudes) <= 0.5:
+            return float(np.median(altitudes))
+    name = pm.find("k:name", NS)
+    if name is not None and name.text:
+        match = re.search(r"[-+]?\d+(?:\.\d+)?", name.text)
         if match:
             return float(match.group(0))
     return None
@@ -91,13 +115,21 @@ def _kml_bytes(payload: bytes, filename: str) -> bytes:
     if filename.lower().endswith(".kmz") or payload[:2] == b"PK":
         try:
             with zipfile.ZipFile(io.BytesIO(payload)) as archive:
-                names = [n for n in archive.namelist() if n.lower().endswith(".kml")]
-                if not names:
+                members = [n for n in archive.infolist() if n.filename.lower().endswith(".kml")]
+                if not members:
                     raise AnalysisError("KMZ archive does not contain a KML document")
-                preferred = next((n for n in names if n.lower().endswith("doc.kml")), names[0])
-                return archive.read(preferred)
-        except zipfile.BadZipFile as exc:
-            raise AnalysisError("The uploaded KMZ file is not a valid ZIP archive") from exc
+                preferred = next((n for n in members if n.filename.lower().endswith("doc.kml")), members[0])
+                if preferred.file_size > MAX_KML_BYTES:
+                    raise AnalysisError("KML inside KMZ exceeds the 40 MB safety limit")
+                with archive.open(preferred) as source:
+                    data = source.read(MAX_KML_BYTES + 1)
+                if len(data) > MAX_KML_BYTES:
+                    raise AnalysisError("KML inside KMZ exceeds the 40 MB safety limit")
+                return data
+        except (zipfile.BadZipFile, RuntimeError) as exc:
+            raise AnalysisError("The uploaded KMZ file is invalid or password-protected") from exc
+    if len(payload) > MAX_KML_BYTES:
+        raise AnalysisError("KML exceeds the 40 MB safety limit")
     return payload
 
 
@@ -111,18 +143,18 @@ def parse_contours(payload: bytes, filename: str) -> ContourPointSet:
     features = 0
     elevations: list[float] = []
     for placemark in root.findall(".//k:Placemark", NS):
-        elevation = _elevation_for_placemark(placemark)
-        if elevation is None:
-            continue
-        coordinate_nodes = placemark.findall(".//k:coordinates", NS)
-        points = []
-        for node in coordinate_nodes:
-            points.extend(_parse_coordinates(node.text))
-        if not points:
-            continue
-        features += 1
-        elevations.append(elevation)
-        rows.extend((lon, lat, elevation) for lon, lat in points)
+        for line in placemark.findall(".//k:LineString", NS):
+            elevation = _elevation_for_placemark(placemark, line)
+            if elevation is None:
+                continue
+            points = _parse_coordinates(line.findtext("k:coordinates", namespaces=NS))
+            if len(points) < 2:
+                continue
+            features += 1
+            elevations.append(elevation)
+            rows.extend((lon, lat, elevation) for lon, lat in points)
+            if len(rows) > MAX_CONTOUR_POINTS:
+                raise AnalysisError("Contour map exceeds the 350,000-vertex safety limit")
 
     if len(rows) < 10 or len(set(elevations)) < 2:
         raise AnalysisError("No usable contour lines with at least two elevation levels were found")
@@ -151,26 +183,33 @@ def _grid_from_contours(contours: ContourPointSet, requested_size: int):
     if len(samples) > 45_000:
         keep = np.linspace(0, len(samples) - 1, 45_000, dtype=int)
         samples, values = samples[keep], values[keep]
-    dem = griddata(samples, values, (xx, yy), method="linear")
+    try:
+        dem = griddata(samples, values, (xx, yy), method="linear")
+    except (QhullError, ValueError) as exc:
+        raise AnalysisError("Contour lines must cover a two-dimensional area, not a single line") from exc
     missing = np.isnan(dem)
     if missing.any():
         dem[missing] = griddata(samples, values, (xx[missing], yy[missing]), method="nearest")
     return xx, yy, dem, lon0, lat0
 
 
-def _flow_graph(dem: np.ndarray, cell_area: float):
+def _flow_graph(dem: np.ndarray, cell_area: float, dx: float | None = None, dy: float | None = None):
     rows, cols = dem.shape
     downstream = np.full((rows, cols), -1, dtype=np.int64)
+    dx = dx or math.sqrt(cell_area)
+    dy = dy or math.sqrt(cell_area)
     directions = [(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)]
     for r in range(rows):
         for c in range(cols):
-            best = float(dem[r, c])
+            best_grade = 0.0
             best_index = -1
             for dr, dc in directions:
                 rr, cc = r + dr, c + dc
-                if 0 <= rr < rows and 0 <= cc < cols and dem[rr, cc] < best:
-                    best = float(dem[rr, cc])
-                    best_index = rr * cols + cc
+                if 0 <= rr < rows and 0 <= cc < cols:
+                    grade = (float(dem[r, c]) - float(dem[rr, cc])) / math.hypot(dc * dx, dr * dy)
+                    if grade > best_grade:
+                        best_grade = grade
+                        best_index = rr * cols + cc
             downstream[r, c] = best_index
 
     accumulation = np.full(rows * cols, cell_area, dtype=float)
@@ -217,19 +256,30 @@ def _contributing_cells(downstream: np.ndarray, candidate: tuple[int, int]) -> s
 def _cells_geometry(cells: Iterable[int], rows: int, cols: int, gx: np.ndarray, gy: np.ndarray):
     dx = float(np.median(np.diff(gx)))
     dy = float(np.median(np.diff(gy)))
+    # Build shared edges once. Recomputing each box from its centre can leave
+    # sub-nanometre gaps and produce thousands of separate GeoJSON polygons.
+    x_edges = float(gx[0]) - dx / 2 + np.arange(cols + 1) * dx
+    y_edges = float(gy[0]) - dy / 2 + np.arange(rows + 1) * dy
     polygons = []
     for index in cells:
         r, c = divmod(index, cols)
-        polygons.append(box(gx[c] - dx / 2, gy[r] - dy / 2, gx[c] + dx / 2, gy[r] + dy / 2))
+        polygons.append(box(x_edges[c], y_edges[r], x_edges[c + 1], y_edges[r + 1]))
     return unary_union(polygons)
 
 
-def _candidate_indices(dem: np.ndarray, accumulation: np.ndarray, max_candidates: int) -> list[tuple[int, int]]:
+def _candidate_indices(
+    dem: np.ndarray,
+    accumulation: np.ndarray,
+    max_candidates: int,
+    eligible_mask: np.ndarray | None = None,
+) -> list[tuple[int, int]]:
     rows, cols = dem.shape
     boundary = max(2, round(min(rows, cols) * 0.04))
     eligible = np.ones_like(dem, dtype=bool)
     eligible[:boundary, :] = eligible[-boundary:, :] = False
     eligible[:, :boundary] = eligible[:, -boundary:] = False
+    if eligible_mask is not None:
+        eligible &= eligible_mask
     # Prefer meaningful flow concentration while retaining lower terrain.
     positive = accumulation[eligible]
     if not len(positive):

@@ -6,4 +6,8 @@ scipy>=1.11,<2
 shapely>=2.0,<3
 pytest>=8,<10
 httpx>=0.27,<1
-
+rasterio>=1.4,<2
+pystac-client>=0.9,<1
+planetary-computer>=1.0,<2
+requests>=2.31,<3
+contourpy>=1.2,<2
