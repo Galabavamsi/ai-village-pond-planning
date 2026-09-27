@@ -83,3 +83,51 @@ def write_bytes(kind: str, key: str, suffix: str, data: bytes) -> None:
         _atomic_write(cache_path(kind, key, suffix), data)
     except OSError:
         pass
+
+
+_resolved: dict[tuple, list] = {}
+_real_getaddrinfo = None
+DATA_HOSTS = (
+    "overpass-api.de", "maps.mail.ru", "overpass.private.coffee", "planetarycomputer.microsoft.com",
+    "copernicus-dem-30m.s3.amazonaws.com", "data.chc.ucsb.edu",
+)
+
+
+def install_dns_cache(prewarm: tuple[str, ...] = DATA_HOSTS) -> None:
+    """Reuse the last good address when a DNS lookup fails (stale-if-error).
+
+    The container's resolvers drop queries at random and each failure costs
+    ~20 s. This only affects Python sockets (requests); GDAL has its own
+    resolver and relies on ``retry`` instead.
+    """
+    import socket
+    import threading
+
+    global _real_getaddrinfo
+    if _real_getaddrinfo is not None:
+        return
+    _real_getaddrinfo = socket.getaddrinfo
+
+    def getaddrinfo(host, port, *args, **kwargs):
+        key = (host, port)
+        try:
+            result = _real_getaddrinfo(host, port, *args, **kwargs)
+        except socket.gaierror:
+            if key in _resolved:
+                return _resolved[key]
+            raise
+        _resolved[key] = result
+        return result
+
+    socket.getaddrinfo = getaddrinfo
+
+    def warm() -> None:
+        for host in prewarm:
+            for _ in range(3):
+                try:
+                    socket.getaddrinfo(host, 443, 0, socket.SOCK_STREAM)
+                    break
+                except OSError:
+                    time.sleep(1)
+
+    threading.Thread(target=warm, name="dns-prewarm", daemon=True).start()

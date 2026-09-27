@@ -43,7 +43,7 @@ ROAD_BUFFERS_M = {
 }
 MINOR_PATH_BUFFER_M = 4.0  # tracks, footways and paths
 RAILWAY_BUFFER_M = 30.0
-OVERPASS_BUDGET_S = 75.0
+OVERPASS_BUDGET_S = 90.0
 
 
 @dataclass
@@ -229,7 +229,8 @@ def _cached_water_screening(west: float, south: float, east: float, north: float
     deadline = time.monotonic() + OVERPASS_BUDGET_S
     # Cycle through the servers until one answers completely or time runs out;
     # slow campus DNS and TCP handshakes make single attempts unreliable.
-    for url in OVERPASS_URLS * 3:
+    # The main server answers most often; give it two tries before the mirrors.
+    for url in (OVERPASS_URLS[0],) + OVERPASS_URLS * 3:
         remaining = deadline - time.monotonic()
         if remaining < 8:
             break

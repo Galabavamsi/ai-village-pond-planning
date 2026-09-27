@@ -69,3 +69,27 @@ def test_cached_dem_grid_is_used_without_network(cache_dir, monkeypatch):
             cache.write_bytes("dem", cache.cache_key("glo30-v1", bounds, origin), ".npy", buffer.getvalue())
     assert grid.z.shape == (rows, cols) and float(grid.z.max()) == 250.0
     planning._copernicus_grid.cache_clear()
+
+
+def test_dns_cache_serves_last_good_answer_when_lookup_fails(monkeypatch):
+    import socket
+
+    answers = {"calls": 0}
+
+    def fake(host, port, *args, **kwargs):
+        answers["calls"] += 1
+        if answers["calls"] > 1:
+            raise socket.gaierror("temporary failure in name resolution")
+        return [("family", "type", 6, "", ("192.0.2.1", port))]
+
+    monkeypatch.setattr(cache, "_real_getaddrinfo", None)
+    monkeypatch.setattr(cache, "_resolved", {})
+    monkeypatch.setattr(socket, "getaddrinfo", fake)
+    cache.install_dns_cache(prewarm=())
+    try:
+        first = socket.getaddrinfo("example.test", 443)
+        assert socket.getaddrinfo("example.test", 443) == first
+        with pytest.raises(socket.gaierror):
+            socket.getaddrinfo("never-resolved.test", 443)
+    finally:
+        monkeypatch.setattr(cache, "_real_getaddrinfo", None)

@@ -11,6 +11,7 @@ from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
+from .cache import install_dns_cache
 from .examples import EXAMPLE_AREAS
 from .planning import (
     DEFAULT_MAX_CATCHMENT_HA, analyze_area, export_contours, register_uploaded_contours,
@@ -18,6 +19,9 @@ from .planning import (
 )
 from .terrain import AnalysisError, analyze_contour_file
 
+
+# The IIT container drops DNS queries at random; keep the last good answers.
+install_dns_cache()
 
 app = FastAPI(
     title="AI Village Pond Planning API",
