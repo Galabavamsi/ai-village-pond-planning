@@ -1,0 +1,2 @@
+# Shell scripts run on the Linux container; keep Unix line endings everywhere.
+*.sh text eol=lf
