@@ -3,11 +3,21 @@ import type { MultiPolygon, Polygon, Position } from "geojson";
 import { ChevronLeft, Info, Minus, Mountain, Plus, RotateCcw, X } from "lucide-react";
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { GOOGLE_LOGO_ON_IMAGERY, viewportCopyright, type GoogleTiles } from "./google";
 import type { Analysis, Site, TerrainPreview } from "./types";
 
 const R = 6_371_000;
 const RAD = Math.PI / 180;
-const IMAGERY_URL = "https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2025_3857/default/g/{z}/{y}/{x}.jpg";
+interface Imagery {
+  template: string;
+  maxZoom: number;
+  maxTiles: number;
+  google: boolean;
+}
+const EOX_IMAGERY: Imagery = {
+  template: "https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2025_3857/default/g/{z}/{y}/{x}.jpg",
+  maxZoom: 15, maxTiles: 36, google: false,
+};
 type LocalRing = [number, number][];
 type LocalPolygon = LocalRing[];
 type SceneApi = { reset: () => void; zoom: (factor: number) => void };
@@ -114,14 +124,14 @@ function numberSprite(text: string, active: boolean, size: number) {
   return sprite;
 }
 
-/** Mosaic Sentinel-2 cloudless tiles over the grid extent and return per-vertex UVs. */
-async function imageryTexture(data: TerrainPreview, signal: AbortSignal) {
+/** Mosaic imagery tiles (Google or Sentinel-2) over the grid extent and return per-vertex UVs. */
+async function imageryTexture(data: TerrainPreview, signal: AbortSignal, imagery: Imagery) {
   const [west, south] = lonLat(data.x_m[0], data.y_m[0], data);
   const [east, north] = lonLat(data.x_m[data.columns - 1], data.y_m[data.rows - 1], data);
   const tileX = (lon: number, z: number) => ((lon + 180) / 360) * 2 ** z;
   const tileY = (lat: number, z: number) => ((1 - Math.log(Math.tan(lat * RAD) + 1 / Math.cos(lat * RAD)) / Math.PI) / 2) * 2 ** z;
-  let z = 15;
-  while (z > 8 && (Math.floor(tileX(east, z)) - Math.floor(tileX(west, z)) + 1) * (Math.floor(tileY(south, z)) - Math.floor(tileY(north, z)) + 1) > 36) z--;
+  let z = imagery.maxZoom;
+  while (z > 8 && (Math.floor(tileX(east, z)) - Math.floor(tileX(west, z)) + 1) * (Math.floor(tileY(south, z)) - Math.floor(tileY(north, z)) + 1) > imagery.maxTiles) z--;
   const x0 = Math.floor(tileX(west, z));
   const x1 = Math.floor(tileX(east, z));
   const y0 = Math.floor(tileY(north, z));
@@ -140,7 +150,7 @@ async function imageryTexture(data: TerrainPreview, signal: AbortSignal) {
         image.crossOrigin = "anonymous";
         image.onload = () => { context.drawImage(image, (x - x0) * 256, (y - y0) * 256); resolve(true); };
         image.onerror = () => resolve(false);
-        image.src = IMAGERY_URL.replace("{z}", String(z)).replace("{x}", String(x)).replace("{y}", String(y));
+        image.src = imagery.template.replace("{z}", String(z)).replace("{x}", String(x)).replace("{y}", String(y));
         signal.addEventListener("abort", () => { image.src = ""; resolve(false); });
       }));
     }
@@ -159,7 +169,7 @@ async function imageryTexture(data: TerrainPreview, signal: AbortSignal) {
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
   texture.anisotropy = 4;
-  return { texture, uv };
+  return { texture, uv, zoom: z, bounds: [west, south, east, north] as [number, number, number, number] };
 }
 
 interface SceneState {
@@ -180,8 +190,10 @@ interface SceneState {
   imagery: THREE.Texture | null;
 }
 
-function TerrainScene({ result, site, exaggeration, surface, apiRef, onFailure, onImageryError }: {
+function TerrainScene({ result, site, exaggeration, surface, imagery, apiRef, onFailure, onImageryError, onImageryLoaded }: {
   result: Analysis;
+  imagery: Imagery;
+  onImageryLoaded: (zoom: number, bounds: [number, number, number, number]) => void;
   site: Site;
   exaggeration: number;
   surface: Surface;
@@ -357,18 +369,19 @@ function TerrainScene({ result, site, exaggeration, surface, apiRef, onFailure, 
     const state = stateRef.current;
     if (!state || surface !== "imagery" || state.imagery) return;
     const controller = new AbortController();
-    imageryTexture(data, controller.signal)
-      .then(({ texture, uv }) => {
+    imageryTexture(data, controller.signal, imagery)
+      .then(({ texture, uv, zoom, bounds }) => {
         const current = stateRef.current;
         if (!current || controller.signal.aborted) { texture.dispose(); return; }
         current.geometry.setAttribute("uv", new THREE.BufferAttribute(uv, 2));
         current.imagery = texture;
         onImageryError(null);
+        onImageryLoaded(zoom, bounds);
         setVersion((value) => value + 1);
       })
       .catch((cause: Error) => { if (!controller.signal.aborted) onImageryError(cause.message); });
     return () => controller.abort();
-  }, [data, surface, version, onImageryError]);
+  }, [data, surface, version, imagery, onImageryError, onImageryLoaded]);
 
   // Surface colouring, catchment tint and draped overlays for the active site.
   useEffect(() => {
@@ -466,12 +479,22 @@ function TerrainScene({ result, site, exaggeration, surface, apiRef, onFailure, 
   return <div className="terrain-scene" ref={mountRef} role="img" aria-label={`3D elevation surface from ${data.source}; selected pond site at ${site.elevation_m} metres`} />;
 }
 
-export default function TerrainInspector({ result, activeSite, onSiteChange, onClose }: {
+export default function TerrainInspector({ result, activeSite, onSiteChange, onClose, googleKey = null, googleTiles = null }: {
   result: Analysis;
   activeSite: Site;
   onSiteChange: (id: string) => void;
   onClose: () => void;
+  googleKey?: string | null;
+  googleTiles?: GoogleTiles | null;
 }) {
+  const imagery = useMemo<Imagery>(() => (googleTiles
+    ? { template: googleTiles.url, maxZoom: 18, maxTiles: 64, google: true }
+    : EOX_IMAGERY), [googleTiles]);
+  const [googleCredit, setGoogleCredit] = useState<string | null>(null);
+  const onImageryLoaded = useMemo(() => (zoom: number, bounds: [number, number, number, number]) => {
+    if (!imagery.google || !googleKey || !googleTiles) return;
+    viewportCopyright(googleKey, googleTiles, bounds, zoom).then(setGoogleCredit).catch(() => setGoogleCredit("Imagery © Google"));
+  }, [imagery, googleKey, googleTiles]);
   const initial = useMemo(() => defaultExaggeration(result.terrain_preview), [result.terrain_preview]);
   const [exaggeration, setExaggeration] = useState(initial);
   const [surface, setSurface] = useState<Surface>("relief");
@@ -499,9 +522,15 @@ export default function TerrainInspector({ result, activeSite, onSiteChange, onC
             {sceneError ? (
               <div className="terrain-fallback"><Info size={28} /><strong>3D view unavailable</strong><p>{sceneError}</p><button onClick={onClose}>Return to 2D map</button></div>
             ) : (
-              <TerrainScene result={result} site={activeSite} exaggeration={exaggeration} surface={surface} apiRef={apiRef} onFailure={setSceneError} onImageryError={setImageryError} />
+              <TerrainScene result={result} site={activeSite} exaggeration={exaggeration} surface={surface} imagery={imagery} apiRef={apiRef} onFailure={setSceneError} onImageryError={setImageryError} onImageryLoaded={onImageryLoaded} />
             )}
             <div className="terrain-instructions">Drag to orbit · right-drag to pan · scroll or pinch to zoom</div>
+            {surface === "imagery" && imagery.google && !imageryError ? (
+              <div className="google-credit google-credit--inspector" role="note">
+                <img src={GOOGLE_LOGO_ON_IMAGERY} alt="Google Maps" height={18} />
+                <span>{googleCredit ?? "Imagery © Google"} · terrain mesh and overlays by this planner</span>
+              </div>
+            ) : null}
             <div className="terrain-view-controls">
               <button type="button" aria-label="Zoom in 3D" onClick={() => apiRef.current?.zoom(1.3)}><Plus size={18} /></button>
               <button type="button" aria-label="Zoom out 3D" onClick={() => apiRef.current?.zoom(1 / 1.3)}><Minus size={18} /></button>
@@ -517,7 +546,7 @@ export default function TerrainInspector({ result, activeSite, onSiteChange, onC
             </div>
             <div className="segmented segmented--small terrain-surface" role="group" aria-label="Surface">
               <button className={surface === "relief" ? "segmented--active" : ""} onClick={() => setSurface("relief")}>Elevation colours</button>
-              <button className={surface === "imagery" ? "segmented--active" : ""} onClick={() => setSurface("imagery")}>Satellite drape</button>
+              <button className={surface === "imagery" ? "segmented--active" : ""} onClick={() => setSurface("imagery")}>{imagery.google ? "Google satellite drape" : "Satellite drape"}</button>
             </div>
             {surface === "imagery" && imageryError ? <p className="terrain-caveat">{imageryError} Elevation colours are shown instead.</p> : null}
             <div className="terrain-measure"><span>Outlet ground</span><strong>{activeSite.elevation_m.toFixed(1)} <small>m</small></strong></div>

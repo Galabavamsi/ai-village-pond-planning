@@ -241,3 +241,32 @@ tr.is-active .site-rank-dot { background: #e8702a; border-color: #fff; color: #f
   .map-mobile-actions { top: 112px; left: 10px; }
   .map-notice { top: auto; bottom: 60px; left: 10px; right: 10px; max-width: none; }
 }
+
+/* Optional Google layers: the logo and data credit must stay visible and unobscured. */
+.google-credit {
+  position: absolute; right: 46px; bottom: 54px; z-index: 5;
+  display: flex; align-items: center; gap: 8px; max-width: min(520px, calc(100% - 120px));
+  padding: 4px 9px 4px 6px; border-radius: 6px;
+  background: #0d1f24cc; color: #f1f5f4; font-size: 10.5px; line-height: 1.3;
+  pointer-events: none;
+}
+.google-credit img { display: block; height: 18px; width: auto; flex: none; }
+.google-credit--inspector { right: 16px; bottom: 16px; }
+.earth-viewport { background: #0e2229; }
+.earth-viewport .earth-map { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.earth-status { position: absolute; inset: 0; display: grid; place-items: center; color: #e6f2ef; font-size: 13px; font-weight: 700; }
+.terrain-key .earth-key--selection { height: 3px; background: #ffffff; outline: 1px solid #56686f; }
+.terrain-key .earth-key--google { background: linear-gradient(90deg, #4285f4 0 25%, #ea4335 25% 50%, #fbbc05 50% 75%, #34a853 75%); }
+.earth-links { display: grid; gap: 6px; margin-top: 4px; }
+.earth-links a, .site-links a {
+  display: inline-flex; align-items: center; gap: 6px; padding: 7px 9px;
+  border: 1px solid #d7e4e2; border-radius: 7px; background: #fff;
+  color: #155f67; font-size: 11px; font-weight: 800; text-decoration: none;
+}
+.earth-links a:hover, .site-links a:hover { background: #f0f8f6; border-color: #86c6c5; }
+.site-links { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.place-results-credit { display: flex; align-items: center; gap: 6px; }
+.place-results-credit img { height: 16px; width: auto; }
+@media (max-width: 950px) {
+  .google-credit { left: 10px; right: 10px; bottom: 56px; max-width: none; font-size: 9.5px; }
+}

@@ -7,6 +7,7 @@ import {
   Download,
   Droplets,
   Earth,
+  ExternalLink,
   FileCode2,
   Info,
   MapPinned,
@@ -15,6 +16,7 @@ import {
 } from "lucide-react";
 import StageChart, { RainBars } from "./StageChart";
 import { downloadResultsGeoJSON, downloadResultsKml } from "./exporters";
+import { googleEarthLink, googleMapsLink } from "./google";
 import type { Analysis, Site } from "./types";
 
 export const compact = (value: number, digits = 0) =>
@@ -126,6 +128,14 @@ export default function ResultsPanel({ result, activeSite, onSiteChange, loading
             <span>{hemi(activeSite.location.coordinates[1], "N", "S")}, {hemi(activeSite.location.coordinates[0], "E", "W")} · {activeSite.elevation_m.toFixed(1)} m</span>
           </div>
           <span className="site-rank">#{index + 1}</span>
+        </div>
+        <div className="site-links" aria-label="Open this site in Google's apps">
+          <a href={googleMapsLink(activeSite.location.coordinates[0], activeSite.location.coordinates[1])} target="_blank" rel="noreferrer">
+            <ExternalLink size={13} /> Google Maps satellite
+          </a>
+          <a href={googleEarthLink(activeSite.location.coordinates[0], activeSite.location.coordinates[1], activeSite.elevation_m)} target="_blank" rel="noreferrer">
+            <ExternalLink size={13} /> Google Earth
+          </a>
         </div>
 
         <div className={`screening-note ${unverified ? "screening-note--warning" : ""}`}>

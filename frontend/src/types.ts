@@ -19,6 +19,8 @@ export interface Config {
   default_rainfall_year: number;
   default_rainfall_period: RainfallPeriod;
   default_max_catchment_ha: number;
+  /** Browser key for the optional Google layers; null when not configured. */
+  google_maps_key?: string | null;
   examples: ExampleArea[];
 }
 

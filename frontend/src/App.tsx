@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { Component, lazy, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { Polygon } from "geojson";
 import {
   ArrowRight,
@@ -6,6 +6,7 @@ import {
   Compass,
   Database,
   Download,
+  Earth,
   ExternalLink,
   Globe2,
   Info,
@@ -30,9 +31,19 @@ import { apiFetch } from "./api";
 import PlaceSearch, { type Place } from "./PlaceSearch";
 import ResultsPanel, { compact } from "./ResultsPanel";
 import { downloadContourKml } from "./exporters";
+import { satelliteTiles, type GoogleTiles } from "./google";
 import type { Analysis, Basemap, Config, DrawMode, ExampleArea, MapFocus, RainfallPeriod, TerrainSource, UploadedDataset } from "./types";
 
 const TerrainInspector = lazy(() => import("./TerrainInspector"));
+const GoogleEarthView = lazy(() => import("./GoogleEarthView"));
+
+/** Keeps an optional, third-party-backed view from ever blanking the whole planner. */
+class OptionalFeature extends Component<{ children: ReactNode; fallback: () => void }, { failed: boolean }> {
+  state = { failed: false };
+  static getDerivedStateFromError() { return { failed: true }; }
+  componentDidCatch(error: unknown) { console.error("Optional view failed:", error); this.props.fallback(); }
+  render() { return this.state.failed ? null : this.props.children; }
+}
 
 type Bounds = [number, number, number, number];
 const EARTH_RADIUS = 6_371_000;
@@ -149,6 +160,8 @@ export default function App() {
   const [controlsOpen, setControlsOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [terrainOpen, setTerrainOpen] = useState(false);
+  const [earthOpen, setEarthOpen] = useState(false);
+  const [googleTiles, setGoogleTiles] = useState<GoogleTiles | null>(null);
   const [examplesOpen, setExamplesOpen] = useState(false);
   const focusKey = useRef(0);
 
@@ -168,6 +181,8 @@ export default function App() {
         setPeriod(data.default_rainfall_period ?? "monsoon");
         setYear(Math.min(data.default_rainfall_year ?? latestMonsoonYear, latestMonsoonYear));
         setMaxCatchment(data.default_max_catchment_ha ?? 100);
+        // Optional: Google imagery replaces Sentinel-2 when the key and quota allow.
+        if (data.google_maps_key) void satelliteTiles(data.google_maps_key).then(setGoogleTiles);
       })
       .catch((cause: Error) => setConfigError(cause.message));
   }, []);
@@ -323,6 +338,7 @@ export default function App() {
     }
   };
 
+  const googleKey = config?.google_maps_key ?? null;
   const activeSite = result?.recommendations.find((item) => item.site_id === activeSiteId) ?? result?.recommendations[0] ?? null;
   const surveyUrl = source === "upload" && uploaded ? uploaded.contour_url : source === "sample" ? "/api/sample-contours" : null;
   const demContours = result && result.elevation.source_key === "copernicus" ? result.contours : null;
@@ -520,10 +536,13 @@ export default function App() {
                 <span>{source === "sample" ? "Supplied contours · Khapri, near IIT Bhilai" : source === "upload" ? `Uploaded survey · ${uploaded?.filename ?? "contours"}` : "Copernicus GLO-30 · global"}</span>
               </div>
             </div>
-            <PlaceSearch onPick={pickPlace} />
+            <PlaceSearch onPick={pickPlace} googleKey={googleKey} />
             <div className="map-topline-right">
               {result ? (
-                <button className="terrain-open-button" type="button" onClick={() => setTerrainOpen(true)}><Mountain size={16} /> Inspect 3D model</button>
+                <>
+                  {googleKey ? <button className="terrain-open-button" type="button" onClick={() => setEarthOpen(true)}><Earth size={16} /> Google 3D Earth</button> : null}
+                  <button className="terrain-open-button" type="button" onClick={() => setTerrainOpen(true)}><Mountain size={16} /> Inspect 3D model</button>
+                </>
               ) : (
                 <span className="map-topline-badge"><span className="live-dot" /> {loading ? "Analyzing…" : "Ready"}</span>
               )}
@@ -545,6 +564,8 @@ export default function App() {
               onSelection={selectArea}
               onDrawComplete={() => setDrawMode("none")}
               onSiteClick={setActiveSiteId}
+              googleKey={googleKey}
+              googleTiles={googleTiles}
             />
           ) : (
             <div className="map-loading">{configError ?? "Loading the study area…"}</div>
@@ -552,7 +573,8 @@ export default function App() {
           <div className="map-toolbar" role="toolbar" aria-label="Map view">
             <div className="map-toolbar-group" role="group" aria-label="Basemap">
               {([["topo", <MapIcon size={15} key="i" />, "Topo"], ["satellite", <Satellite size={15} key="i" />, "Satellite"], ["streets", <Globe2 size={15} key="i" />, "Streets"]] as const).map(([value, icon, label]) => (
-                <button key={value} type="button" aria-pressed={basemap === value} className={basemap === value ? "is-active" : ""} onClick={() => setBasemap(value)}>{icon}<span>{label}</span></button>
+                <button key={value} type="button" aria-pressed={basemap === value} className={basemap === value ? "is-active" : ""} onClick={() => setBasemap(value)}
+                  title={value === "satellite" ? (googleTiles ? "Google satellite imagery with labels" : "Sentinel-2 cloudless imagery (10 m)") : undefined}>{icon}<span>{label}</span></button>
               ))}
             </div>
             <div className="map-toolbar-group" role="group" aria-label="Layers">
@@ -591,6 +613,7 @@ export default function App() {
             <button onClick={() => setControlsOpen(true)}><SlidersHorizontal size={17} /> Study area</button>
             <button onClick={() => setDrawMode("polygon")}><Pentagon size={17} /> Draw</button>
             {result ? <button onClick={() => setTerrainOpen(true)}><Mountain size={17} /> 3D model</button> : null}
+            {result && googleKey ? <button onClick={() => setEarthOpen(true)}><Earth size={17} /> Google 3D</button> : null}
           </div>
         </main>
         <ResultsPanel result={result} activeSite={activeSite} onSiteChange={setActiveSiteId} loading={loading} onExportContours={exportContours} exporting={exporting} />
@@ -619,7 +642,14 @@ export default function App() {
       ) : null}
       {terrainOpen && result && activeSite ? (
         <Suspense fallback={<div className="terrain-loading">Preparing 3D terrain…</div>}>
-          <TerrainInspector result={result} activeSite={activeSite} onSiteChange={setActiveSiteId} onClose={() => setTerrainOpen(false)} />
+          <TerrainInspector result={result} activeSite={activeSite} onSiteChange={setActiveSiteId} onClose={() => setTerrainOpen(false)} googleKey={googleKey} googleTiles={googleTiles} />
+        </Suspense>
+      ) : null}
+      {earthOpen && result && activeSite && googleKey ? (
+        <Suspense fallback={<div className="terrain-loading">Opening Google 3D Earth…</div>}>
+          <OptionalFeature fallback={() => setEarthOpen(false)}>
+            <GoogleEarthView result={result} activeSite={activeSite} googleKey={googleKey} onSiteChange={setActiveSiteId} onClose={() => setEarthOpen(false)} />
+          </OptionalFeature>
         </Suspense>
       ) : null}
     </div>

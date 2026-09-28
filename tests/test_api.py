@@ -50,3 +50,24 @@ def test_sample_kmz_is_supported():
     )
     assert response.status_code == 200, response.text
     assert response.json()["input"]["format"] == "KMZ"
+
+
+def test_config_exposes_google_key_only_when_configured(monkeypatch):
+    monkeypatch.delenv("GOOGLE_MAPS_API_KEY", raising=False)
+    assert client.get("/api/config").json()["google_maps_key"] is None
+    monkeypatch.setenv("GOOGLE_MAPS_API_KEY", "  test-browser-key  ")
+    assert client.get("/api/config").json()["google_maps_key"] == "test-browser-key"
+
+
+def test_env_file_sets_defaults_without_overriding(tmp_path, monkeypatch):
+    from app.settings import load_env_file
+
+    env = tmp_path / ".env"
+    env.write_text("# comment\nPOND_TEST_A=from-file\nPOND_TEST_B='quoted'\nnot a setting\n", encoding="utf-8")
+    monkeypatch.delenv("POND_TEST_A", raising=False)
+    monkeypatch.setenv("POND_TEST_B", "from-env")
+    load_env_file(env)
+    import os
+    assert os.environ["POND_TEST_A"] == "from-file"
+    assert os.environ["POND_TEST_B"] == "from-env"
+    monkeypatch.delenv("POND_TEST_A")

@@ -83,6 +83,11 @@ was created with `uv` and has no pip; use
   `~/ai-village-pond-planning/logs/app.log`). All 32 tests pass on the server;
   the browser walkthrough and upload/3D smoke suites pass against the live URL
   (`POND_URL=http://10.1.75.53:3233/ node scripts/walkthrough.mjs`).
+- **Google Maps layers** (satellite basemap and drape, 3D Earth view, place
+  search) are enabled by `GOOGLE_MAPS_API_KEY` in the git-ignored `.env`
+  (local and `~/ai-village-pond-planning/.env` on sys1). The key is not in
+  the repository. Restrict it by HTTP referrer in Google Cloud Console.
+  `node frontend/scripts/google-check.mjs` verifies the Google features.
 - sys1 was cleaned at the user's request: the graded lab6 load balancer and all
   old lab/Phase 2 files and tool caches were removed.
 - **Network caveats found during deployment:**

@@ -12,6 +12,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from .cache import install_dns_cache
+from .settings import google_maps_key, load_env_file
 from .examples import EXAMPLE_AREAS
 from .planning import (
     DEFAULT_MAX_CATCHMENT_HA, analyze_area, export_contours, register_uploaded_contours,
@@ -20,6 +21,7 @@ from .planning import (
 from .terrain import AnalysisError, analyze_contour_file
 
 
+load_env_file()
 # The IIT container drops DNS queries at random; keep the last good answers.
 install_dns_cache()
 
@@ -75,7 +77,10 @@ async def config() -> dict:
     return {"sample_bounds": bounds, "sources": ["sample", "upload", "copernicus"],
             "default_rainfall_month": "2025-08", "default_rainfall_year": 2025,
             "default_rainfall_period": "monsoon", "default_max_catchment_ha": DEFAULT_MAX_CATCHMENT_HA,
-            "examples": EXAMPLE_AREAS}
+            "examples": EXAMPLE_AREAS,
+            # A browser key is visible to users by design; restrict it by HTTP
+            # referrer in Google Cloud. None disables the Google layers.
+            "google_maps_key": google_maps_key()}
 
 
 @app.get("/api/sample-contours")

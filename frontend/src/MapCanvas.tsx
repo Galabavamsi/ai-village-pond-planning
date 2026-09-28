@@ -12,6 +12,7 @@ import {
 import { TerraDrawMapLibreGLAdapter } from "terra-draw-maplibre-gl-adapter";
 import { BASEMAPS, TERRAIN_TILES, basemapById } from "./basemaps";
 import { apiFetch } from "./api";
+import { GOOGLE_LOGO_ON_IMAGERY, viewportCopyright, type GoogleTiles } from "./google";
 import type { Analysis, Basemap, ContourCollection, DrawMode, MapFocus } from "./types";
 
 interface Props {
@@ -29,6 +30,9 @@ interface Props {
   onSelection: (polygon: Polygon) => void;
   onDrawComplete: () => void;
   onSiteClick: (siteId: string) => void;
+  /** Browser key and Map Tiles session; when set, "Satellite" uses Google imagery. */
+  googleKey: string | null;
+  googleTiles: GoogleTiles | null;
 }
 
 const empty: FeatureCollection = { type: "FeatureCollection", features: [] };
@@ -88,6 +92,8 @@ export default function MapCanvas({
   onSelection,
   onDrawComplete,
   onSiteClick,
+  googleKey,
+  googleTiles,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
@@ -96,6 +102,8 @@ export default function MapCanvas({
   const callbacks = useRef({ onSelection, onDrawComplete, onSiteClick });
   callbacks.current = { onSelection, onDrawComplete, onSiteClick };
   const initialFocus = useRef(focus);
+  const [googleCredit, setGoogleCredit] = useState<string | null>(null);
+  const googleActive = basemap === "satellite" && !!googleTiles && !!googleKey;
 
   // The map is created exactly once; everything else updates it in place so
   // switching terrain source never drops the selection or the drawn state.
@@ -269,10 +277,20 @@ export default function MapCanvas({
 
   useEffect(() => {
     const map = mapRef.current;
+    if (!ready || !map || !googleTiles || map.getSource("basemap-google")) return;
+    // Attribution is drawn separately with the Google Maps logo (see below).
+    map.addSource("basemap-google", { type: "raster", tiles: [googleTiles.url], tileSize: 256, maxzoom: googleTiles.maxzoom });
+    map.addLayer({ id: "basemap-google", type: "raster", source: "basemap-google", layout: { visibility: "none" } }, "hillshade");
+  }, [ready, googleTiles]);
+
+  useEffect(() => {
+    const map = mapRef.current;
     if (!ready || !map) return;
     for (const item of BASEMAPS) {
-      map.setLayoutProperty(`basemap-${item.id}`, "visibility", item.id === basemap ? "visible" : "none");
+      const visible = item.id === basemap && !(item.id === "satellite" && googleActive);
+      map.setLayoutProperty(`basemap-${item.id}`, "visibility", visible ? "visible" : "none");
     }
+    if (map.getLayer("basemap-google")) map.setLayoutProperty("basemap-google", "visibility", googleActive ? "visible" : "none");
     const style = basemapById(basemap);
     for (const id of ["contours-survey", "contours-dem"]) {
       map.setPaintProperty(`${id}-lines`, "line-color", style.contour);
@@ -281,7 +299,36 @@ export default function MapCanvas({
     }
     map.setPaintProperty("selection-border", "line-color", style.outline);
     map.setPaintProperty("selection-casing", "line-color", basemap === "satellite" ? "#0b2530" : "#ffffff");
-  }, [ready, basemap]);
+  }, [ready, basemap, googleActive]);
+
+  // Google requires the data attribution for the tiles actually in view.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!ready || !map || !googleActive || !googleTiles || !googleKey) {
+      setGoogleCredit(null);
+      return;
+    }
+    let controller: AbortController | null = null;
+    let timer = 0;
+    const refresh = () => {
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => {
+        controller?.abort();
+        controller = new AbortController();
+        const b = map.getBounds();
+        viewportCopyright(googleKey, googleTiles, [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()], map.getZoom(), controller.signal)
+          .then(setGoogleCredit)
+          .catch((error: Error) => { if (error.name !== "AbortError") setGoogleCredit("Imagery and map data © Google"); });
+      }, 400);
+    };
+    refresh();
+    map.on("moveend", refresh);
+    return () => {
+      map.off("moveend", refresh);
+      window.clearTimeout(timer);
+      controller?.abort();
+    };
+  }, [ready, googleActive, googleTiles, googleKey]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -373,11 +420,20 @@ export default function MapCanvas({
   }, [ready, drawMode]);
 
   return (
-    <div
-      className={`map-canvas ${drawMode !== "none" ? "map-canvas--drawing" : ""}`}
-      ref={containerRef}
-      data-ready={ready ? "true" : "false"}
-      aria-label="Interactive terrain map"
-    />
+    <>
+      <div
+        className={`map-canvas ${drawMode !== "none" ? "map-canvas--drawing" : ""}`}
+        ref={containerRef}
+        data-ready={ready ? "true" : "false"}
+        data-basemap={googleActive ? "google" : basemap}
+        aria-label="Interactive terrain map"
+      />
+      {googleActive ? (
+        <div className="google-credit" role="note">
+          <img src={GOOGLE_LOGO_ON_IMAGERY} alt="Google Maps" height={18} />
+          <span>{googleCredit ?? "Imagery and map data © Google"} · analysis overlays by this planner</span>
+        </div>
+      ) : null}
+    </>
   );
 }

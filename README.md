@@ -74,6 +74,42 @@ sites and vertical exaggeration, and check for browser errors.
 `node scripts\walkthrough.mjs` captures a tour of the newer features
 (satellite, 3D terrain, example area, satellite drape, search) in `tmp/shots/`.
 
+## Optional Google Maps layers
+
+With a Google Maps Platform browser key the planner adds:
+
+- **Google Satellite** basemap (Map Tiles API, satellite with labels) in the 2D
+  map and the tilted 3D view; without a key "Satellite" uses Sentinel-2.
+- **Google satellite drape** on the 3D model of the analysis grid.
+- **Google 3D Earth** view (Maps JavaScript `Map3DElement`): Google terrain and
+  imagery with the planner's study area, catchments, ponds and sites drawn on
+  top.
+- **Google place search** (Places API New autocomplete); Photon is the
+  fallback.
+- **Open in Google Maps / Google Earth** links for each site (plain links, no
+  key needed).
+
+Configure the key outside the repository: put
+`GOOGLE_MAPS_API_KEY=...` in `.env` at the repository root (git-ignored) or
+export it before starting the server. The server passes it to the browser in
+`/api/config`; the browser calls Google directly, so the server's own network
+is not involved. A browser key is visible to users by design, so restrict it in
+Google Cloud Console to the planner's HTTP referrers (for example
+`http://10.1.75.53:3233/*` and `http://127.0.0.1:8000/*`) and to the Map Tiles,
+Maps JavaScript and Places APIs, and set a budget alert. Without a key, or when
+its quota is exhausted, every feature falls back to the open sources.
+
+Google content is used for display only, as the
+[Map Tiles API policies](https://developers.google.com/maps/documentation/tile/policies)
+require: the Google Maps logo and the viewport's data attribution are shown
+whenever Google imagery is visible, nothing is cached or stored, and no
+analysis uses Google data. Elevation, rainfall and screening still come from
+Copernicus GLO-30, CHIRPS and OpenStreetMap. Google's free monthly usage is
+100,000 2D tiles, 10,000 autocomplete requests and 1,000 3D-tile sessions per
+SKU; beyond that the project's billing account is charged.
+`node frontend/scripts/google-check.mjs` checks every Google feature in a
+browser (its screenshots contain Google imagery; delete them after review).
+
 ## Phase 3 API
 
 `POST /api/analyze-area` accepts JSON:
@@ -186,6 +222,7 @@ verified. The 3D pond is an illustrative water surface, not an excavation.
 | [OSM standard tiles](https://operations.osmfoundation.org/policies/tiles/) | Street basemap | OSMF tile usage policy |
 | [Terrain Tiles on AWS](https://registry.opendata.aws/terrain-tiles/) | MapLibre 3D terrain and hillshade only | SRTM/GMTED2010 courtesy USGS, ETOPO1 courtesy NOAA |
 | [Photon](https://photon.komoot.io) | Place search | OSM data; fair-use public server |
+| [Google Maps Platform](https://developers.google.com/maps) (optional) | Satellite basemap and drape, 3D Earth view, place search | Google Maps Platform Terms; logo and data attribution shown; display only |
 
 Esri World Imagery is intentionally **not** used: its terms require an ArcGIS
 account or Esri software. The OSM editing API is not used for screening
