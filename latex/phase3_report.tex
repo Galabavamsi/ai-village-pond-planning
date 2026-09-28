@@ -1,5 +1,7 @@
 % AI-based Village Pond Planning System - Phase 3 report
 % Build (from the repository root):
+%   python scripts/report_figures.py      # worked-example figures and numbers (latex/generated/)
+%   python scripts/report_images.py       # screenshots -> latex/figures/*.jpg
 %   pdflatex -interaction=nonstopmode -output-directory tmp/latex-build latex/phase3_report.tex   (run twice)
 \documentclass[11pt,a4paper]{article}
 
@@ -18,7 +20,7 @@
 \usepackage{subcaption}
 \usepackage{float}
 \usepackage{tikz}
-\usetikzlibrary{positioning,arrows.meta,fit,backgrounds,calc}
+\usetikzlibrary{positioning,arrows.meta,fit,backgrounds,calc,patterns}
 \usepackage{pgfplots}
 \pgfplotsset{compat=1.18,/pgf/number format/.cd,1000 sep={\mathord{,}},fixed}
 \usepackage{titlesec}
@@ -28,7 +30,7 @@
 \usepackage{hyperref}
 \usepackage{xurl}
 
-% Palette shared with the Phase 2 report and the web app.
+% Palette shared with the Phase 2 report and the web app's light theme.
 \definecolor{navy}{HTML}{12304A}
 \definecolor{teal}{HTML}{087E8B}
 \definecolor{mint}{HTML}{DFF3F2}
@@ -43,8 +45,21 @@
 \definecolor{old}{HTML}{8A97A3}
 \definecolor{warnbg}{HTML}{FFF6E8}
 \definecolor{warnfg}{HTML}{83591F}
+\definecolor{terrainlo}{HTML}{F5EFE2}
+\definecolor{terrainhi}{HTML}{C0925F}
+\pgfplotsset{colormap={terrain}{rgb255=(214,228,196) rgb255=(236,222,180) rgb255=(212,178,130) rgb255=(176,134,92)}}
 
 \graphicspath{{latex/figures/}{figures/}}
+% Generated worked-example snippets (scripts/report_figures.py).
+\IfFileExists{latex/generated/we_values.tex}{\def\genpath{latex/generated/}}{\def\genpath{generated/}}
+\newcommand{\gen}[1]{\input{\genpath#1}}
+% Primitive \input (no file hooks), so table rows can follow \midrule; the space ends the name.
+\newcommand{\genrows}[1]{\csname @@input\endcsname\genpath#1 }
+\gen{we_values.tex}
+% Tighter gaps between sections in the contents, so it fits on one page.
+\usepackage{etoolbox}
+\makeatletter\patchcmd{\l@section}{\addvspace{1.0em \@plus\p@}}{\addvspace{0.45em \@plus\p@}}{}{}\makeatother
+
 \hypersetup{colorlinks=true,linkcolor=teal,urlcolor=teal,citecolor=teal,
   pdftitle={AI-based Village Pond Planning System - Phase 3 Report},
   pdfauthor={AI Village Pond Planning team}}
@@ -80,8 +95,14 @@
 \newcommand{\code}[1]{\texttt{#1}}
 \newcommand{\mthree}{m\textsuperscript{3}}
 \newcommand{\mtwo}{m\textsuperscript{2}}
+\DeclareRobustCommand{\swatch}[1]{\tikz[baseline=-0.1ex]\fill[#1] (0,0) rectangle (2.4mm,2.4mm);}
+\DeclareRobustCommand{\bundkey}{\tikz[baseline=-0.5ex]\draw[collect,line width=2.2pt,line cap=round] (0,0.1) -- (4mm,0.1);}
 \newtcolorbox{keybox}[1][]{colback=mint,colframe=teal,boxrule=0.6pt,arc=2pt,left=6pt,right=6pt,top=4pt,bottom=4pt,fonttitle=\bfseries,#1}
 \newtcolorbox{warnbox}[1][]{colback=warnbg,colframe=gold,boxrule=0.6pt,arc=2pt,left=6pt,right=6pt,top=4pt,bottom=4pt,coltext=warnfg,fonttitle=\bfseries,#1}
+\newtcolorbox{workbox}[1][]{colback=pale,colframe=navy,boxrule=0.6pt,arc=2pt,left=7pt,right=7pt,top=5pt,bottom=5pt,fonttitle=\bfseries,#1}
+\tikzset{callout/.style={draw=white,line width=0.9pt,shorten >=1pt},
+  calloutdot/.style={circle,fill=collect,draw=white,line width=0.6pt,inner sep=1.3pt},
+  calloutlabel/.style={font=\footnotesize,text=ink,text width=31mm,inner sep=1pt}}
 
 \begin{document}
 
@@ -93,7 +114,7 @@
 \end{flushright}
 \vspace{1mm}
 \includegraphics[width=\linewidth]{r05-3d-satellite.jpg}\par
-{\footnotesize\textcolor{muted}{Live screenshot of the deployed planner: three ranked pond sites on the Maikal ridge front (Kabirdham), shown over Sentinel-2 imagery on 3D terrain.}\par}
+{\footnotesize\textcolor{muted}{The planner in its dark theme: three ranked pond sites on the Maikal ridge front (Kabirdham), shown in tilted 3D over Google satellite imagery. The Google logo and imagery attribution stay visible in every Google view.}\par}
 \vspace{5mm}
 {\fontsize{27}{31}\selectfont\bfseries\textcolor{navy}{AI-based Village\\Pond Planning System}\par}
 \vspace{2mm}
@@ -102,8 +123,8 @@
 
 \begin{tabularx}{\linewidth}{@{}Y|Y|Y@{}}
 \textcolor{muted}{\footnotesize\bfseries DEPLOYMENT} & \textcolor{muted}{\footnotesize\bfseries VALIDATION} & \textcolor{muted}{\footnotesize\bfseries COVERAGE}\\
-\textcolor{navy}{\large Live on the IIT network} & \textcolor{navy}{\large 34 automated tests} & \textcolor{navy}{\large 11 verified areas}\\
-\textcolor{muted}{\small verified 28 Sep 2026} & \textcolor{muted}{\small pass locally and on the server} & \textcolor{muted}{\small India and Ethiopia, 60\textdegree S--60\textdegree N}\\
+\textcolor{navy}{\large Live on the IIT network} & \textcolor{navy}{\large 36 automated tests} & \textcolor{navy}{\large 11 verified areas}\\
+\textcolor{muted}{\small verified 28 Sep 2026} & \textcolor{muted}{\small plus 5 browser suites} & \textcolor{muted}{\small India and Ethiopia, 60\textdegree S--60\textdegree N}\\
 \end{tabularx}
 
 \vfill
@@ -129,9 +150,10 @@ Phase 2 delivered an API that turns an uploaded contour map into pond-site and c
 \begin{keybox}[title=What Phase 3 delivers]
 \begin{itemize}
 \item \textbf{Any area, real data.} The planner uses the supplied contour map, any uploaded KML/KMZ contour map, or the global Copernicus GLO-30 elevation model anywhere between 60\textdegree S and 60\textdegree N. Rainfall comes from CHIRPS~v3 for a single month, the June--September monsoon or a full year. OpenStreetMap supplies water bodies, roads and buildings to avoid.
-\item \textbf{A physically consistent pond model.} Storage counts only land that drains to the pond outlet and lies below the embankment crest. Sites are ranked by the water they could actually collect. Each site reports a stage--storage curve, an indicative embankment length and warnings.
-\item \textbf{Earth view.} The map offers topographic, Sentinel-2 satellite and street basemaps, labelled contours, 3D terrain, a globe view, and a 3D model of the exact analysis grid with an optional satellite drape. Results export to Google Earth KML, GeoJSON and contour KML.
-\item \textbf{Deployed and verified.} The planner runs on the assigned IIT container. All 34 tests pass there. The browser test suites pass against the live address, from the campus network.
+\item \textbf{A physically consistent pond model.} Storage counts only land that drains to the pond outlet and lies below the embankment crest. Sites are ranked by the water they could actually collect. Each site reports a stage--storage curve, an indicative embankment length and warnings. Section~\ref{sec:worked} works through the whole calculation by hand on a small grid.
+\item \textbf{Earth view.} Topographic, satellite and street basemaps, labelled contours, 3D terrain and a globe. With a Google Maps key the satellite layer is Google imagery, a \textbf{Google Photorealistic 3D} view shows the ponds and catchments on Google's 3D Earth, and place search uses Google Places. A 3D model of the exact analysis grid can be draped with the same imagery. Results export to Google Earth KML, GeoJSON and contour KML.
+\item \textbf{Dark interface.} The planner opens in a dark theme, with a one-click light theme; icons come from the open-source Lucide set.
+\item \textbf{Deployed and verified.} The planner runs on the assigned IIT container. All 36 tests pass, and the browser suites, including a Google-layer check, pass against the live address from the campus network.
 \end{itemize}
 \end{keybox}
 
@@ -145,7 +167,7 @@ Before this final build, the Phase 3 prototype was reviewed line by line. The re
 A later check found and fixed a fifth: flat terraces created when coarse contours are interpolated. These defects are documented in Section~\ref{sec:review}.
 
 \begin{warnbox}[title=Honest scope]
-All numbers are deterministic screening estimates computed from gridded elevation and historical rainfall. They are not an engineering design, a hydrological simulation or a land-eligibility decision. No language model computes any result. Seepage, evaporation, siltation, soil, spillway design and land ownership are not modelled, and the planner says so in every result.
+All numbers are deterministic screening estimates computed from gridded elevation and historical rainfall. They are not an engineering design, a hydrological simulation or a land-eligibility decision. No language model computes any result, and Google's imagery and 3D surface are shown for context only: no planner number is derived from them. Seepage, evaporation, siltation, soil, spillway design and land ownership are not modelled, and the planner says so in every result.
 \end{warnbox}
 
 % ------------------------------------------------------------------ 2
@@ -155,14 +177,15 @@ All numbers are deterministic screening estimates computed from gridded elevatio
 \toprule
 \textbf{Phase 3 requirement} & \textbf{Implementation and evidence} & \textbf{Status}\\
 \midrule
-Select land on a map & Draw a polygon or rectangle (Terra Draw), pick one of 11 example areas, or search any place (Photon/OSM). The area and span are shown live and validated (0.25--10,000~ha, $\leq$20~km). Figs.~\ref{fig:sample}, \ref{fig:examples}. & Done\\
-Analyze the land & \code{POST /api/analyze-area} with the supplied, uploaded or Copernicus elevation, CHIRPS or manual rainfall, and land-cover and pond settings (Section~\ref{sec:algorithms}). & Done\\
-Show pond location, catchment and water volume on the map & Numbered outlets, pond polygons and catchment polygons for all three sites (active one highlighted), plus runoff, storage and collectable volume, a stage--storage chart and benchmarks (Figs.~\ref{fig:sample}, \ref{fig:panel}). & Done\\
+Select land on a map & Draw a polygon or rectangle (Terra Draw), pick one of 11 example areas, or search any place (Google Places, with Photon/OSM as fallback). The area and span are shown live and validated (0.25--10,000~ha, $\leq$20~km). Figs.~\ref{fig:sample}, \ref{fig:examples}. & Done\\
+Analyze the land & \code{POST /api/analyze-area} with the supplied, uploaded or Copernicus elevation, CHIRPS or manual rainfall, and land-cover and pond settings (Sections~\ref{sec:algorithms} and~\ref{sec:worked}). & Done\\
+Show pond location, catchment and water volume on the map & Numbered outlets, pond polygons and catchment polygons for all three sites (active one highlighted), plus runoff, storage and collectable volume, a stage--storage chart and benchmarks (Figs.~\ref{fig:sample}, \ref{fig:annotated}, \ref{fig:panel}). & Done\\
+3D maps and earth view & MapLibre 3D terrain and globe; Google Photorealistic 3D with the planner's overlays; a 3D model of the analysis grid with elevation colours or a satellite drape (Figs.~\ref{fig:earth}--\ref{fig:inspector}). & Done\\
 Works beyond the sample & Copernicus GLO-30 anywhere at 60\textdegree S--60\textdegree N. Ten areas outside the sample were verified end to end (Section~\ref{sec:examples}). & Done\\
 No hard-coded results & All inputs come from the selected polygon and data source. The example list only moves the map. A test uploads and analyzes every shipped KML. & Done\\
 Front end on the IIT system & \url{http://10.1.75.53:3233/} on sys1 (SSH port 2233, Application~1 port), verified from the campus network (Section~\ref{sec:deploy}). & Done\\
 Phase 2 API compatibility & \code{POST /analyzeContour} (field \code{contour\_map}) and \code{/findCatchment} unchanged; Phase 2 tests pass. & Done\\
-GitHub repository & \url{https://github.com/Galabavamsi/ai-village-pond-planning}, branch \code{master}. & Done\\
+GitHub repository & \url{https://github.com/Galabavamsi/ai-village-pond-planning}, branch \code{master}. The Google key is not in the repository. & Done\\
 Report and demo video & This report; the video follows the walkthrough in Appendix~\ref{app:demo}. & Report done\\
 \bottomrule
 \end{tabularx}
@@ -177,19 +200,21 @@ The planner is one FastAPI application that serves both the API and the compiled
   font=\small,
   box/.style={draw=teal,rounded corners=2pt,fill=pale,align=center,text=navy,minimum height=10mm,inner sep=4pt},
   ext/.style={draw=line,rounded corners=2pt,fill=white,align=center,text=ink,minimum height=8mm,font=\footnotesize,inner sep=3pt},
+  gext/.style={ext,draw=storage!60},
   arrow/.style={-{Stealth[length=2.2mm]},thick,teal},
   remote/.style={-{Stealth[length=2mm]},thick,old,dashed}]
-\node[box,minimum width=58mm] (ui) {\textbf{Browser: React + TypeScript}\\MapLibre GL 2D/3D/globe \textperiodcentered{} Terra Draw\\Three.js inspector \textperiodcentered{} SVG charts \textperiodcentered{} exports};
-\node[box,minimum width=58mm,below=13mm of ui] (api) {\textbf{FastAPI + Uvicorn} (one process)\\routes \textperiodcentered{} validation \textperiodcentered{} static front end};
+\node[box,minimum width=58mm] (ui) {\textbf{Browser: React + TypeScript}\\MapLibre GL 2D/3D/globe \textperiodcentered{} Terra Draw\\Three.js inspector \textperiodcentered{} SVG charts \textperiodcentered{} exports\\dark/light themes \textperiodcentered{} Lucide icons};
+\node[box,minimum width=58mm,below=13mm of ui] (api) {\textbf{FastAPI + Uvicorn} (one process)\\routes \textperiodcentered{} validation \textperiodcentered{} static front end\\\code{.env}: optional Google key};
 \node[box,minimum width=58mm,below=9mm of api] (engine) {\textbf{Planning engine (Python)}\\grid sources \textperiodcentered{} priority-flood + D8\\impoundment \textperiodcentered{} ranking \textperiodcentered{} contours};
 \node[box,minimum width=58mm,below=9mm of engine,fill=mint] (cache) {\textbf{Resilience layer}\\retries \textperiodcentered{} DNS stale-if-error\\disk cache (DEM, CHIRPS, OSM)};
 \node[ext,right=17mm of api,yshift=6mm] (aws) {Copernicus GLO-30\\AWS Open Data};
 \node[ext,below=3mm of aws] (pc) {Planetary Computer\\(fallback)};
 \node[ext,below=3mm of pc] (chirps) {CHIRPS v3 monthly\\UCSB};
 \node[ext,below=3mm of chirps] (overpass) {Overpass API\\OpenStreetMap};
-\node[ext,left=15mm of ui,yshift=5mm] (tiles) {OpenTopoMap \textperiodcentered{} EOX\\OSM tiles};
+\node[ext,left=15mm of ui,yshift=12mm] (tiles) {OpenTopoMap \textperiodcentered{} EOX\\OSM tiles};
 \node[ext,below=3mm of tiles] (terrain) {AWS terrain tiles\\(3D context)};
-\node[ext,below=3mm of terrain] (photon) {Photon search};
+\node[ext,below=3mm of terrain] (photon) {Photon search\\(fallback)};
+\node[gext,below=3mm of photon] (google) {\textbf{Google Maps Platform}\\(optional key)\\Map Tiles 2D \textperiodcentered{} 3D Maps\\Places (New)};
 \draw[arrow] (ui) -- node[right,font=\footnotesize,text=muted]{JSON / GeoJSON over HTTP} (api);
 \draw[arrow] (api) -- (engine);
 \draw[arrow] (engine) -- (cache);
@@ -200,11 +225,12 @@ The planner is one FastAPI application that serves both the API and the compiled
 \draw[remote] (ui.west) -- ++(-5mm,0) |- (tiles.east);
 \draw[remote] (ui.west) ++(-5mm,0) |- (terrain.east);
 \draw[remote] (ui.west) ++(-5mm,0) |- (photon.east);
+\draw[remote,storage!70] (ui.west) ++(-5mm,0) |- (google.east);
 \begin{scope}[on background layer]
 \node[draw=gold,dashed,rounded corners=3pt,fit=(api)(engine)(cache),inner sep=5mm,label={[text=warnfg,font=\footnotesize]south:IIT container sys1 \textperiodcentered{} tmux \code{pond-app} \textperiodcentered{} port 3000 $\rightarrow$ 3233}] {};
 \end{scope}
 \end{tikzpicture}
-\caption{Architecture. Solid arrows are the planner's own calls. Dashed arrows are remote data sources: the browser loads map tiles, terrain tiles and search itself, and the server reads elevation, rainfall and OSM features. Each server-side source is retried and cached.}
+\caption{Architecture. Solid arrows are the planner's own calls. Dashed arrows are remote data sources: the browser loads map tiles, terrain tiles, search and the optional Google layers itself, and the server reads elevation, rainfall and OSM features. Each server-side source is retried and cached. The server only hands the Google browser key to the page (from a git-ignored \code{.env}); it never calls Google itself.}
 \label{fig:architecture}
 \end{figure}
 
@@ -212,17 +238,19 @@ The planner is one FastAPI application that serves both the API and the compiled
 \toprule
 \textbf{Layer} & \textbf{Technology (version)}\\
 \midrule
-Front end & React 19, TypeScript 5.9, Vite 7, MapLibre GL JS 6.11 (globe, terrain, sky), Terra Draw 1.35, Three.js 0.186, lucide icons\\
+Front end & React 19, TypeScript 5.9, Vite 7, MapLibre GL JS 6.11 (globe, terrain, sky), Terra Draw 1.35, Three.js 0.186, Lucide icons, Google Maps JavaScript API (\code{Map3DElement}, loaded only when the 3D Earth view opens)\\
 API & FastAPI 0.141, Uvicorn, Pydantic request models, OpenAPI/Swagger at \code{/docs}\\
 Geospatial & NumPy 2.5, SciPy 1.18 (interpolation, morphology), Shapely 2.1, rasterio 1.5 with GDAL 3.12, contourpy 1.4, pystac-client, planetary-computer\\
-Testing & pytest (34 tests), Playwright with installed Chrome (desktop and mobile browser suites)\\
+Testing & pytest (36 tests), Playwright with installed Chrome (five browser suites, desktop and mobile)\\
 Hosting & Ubuntu 24.04 container on the IIT system, Python 3.12 virtual environment, tmux supervision\\
 \bottomrule
 \end{tabularx}
 
 % ------------------------------------------------------------------ 4
+\clearpage
 \section{Features and user workflow}
 \label{sec:features}
+The screenshots in this section and in Section~\ref{sec:worked} were captured on 28 September 2026 from a local run of the same build that is deployed, so the header badge reads ``Local server''. Live captures over the campus Wi-Fi came out unstyled or blank, because the link drops about half of new connections (Section~\ref{sec:deploy}). The same browser suites pass against the live address (Section~\ref{sec:validation}).
 
 \subsection{Choosing land anywhere}
 The workspace has three columns: the study-area controls, the map, and the results (Figure~\ref{fig:sample}). A planner can:
@@ -236,14 +264,14 @@ The panel shows the selected area and its width and height in kilometres live, a
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\linewidth]{r01-sample-results.jpg}
-\caption{Supplied contour map (Khapri, beside IIT Bhilai) analyzed with the June--September 2025 CHIRPS rainfall. Three numbered outlets, their ponds (blue) and catchments (teal for the active site, dashed grey for the alternatives) sit over the labelled 1\,m contours. The results column ranks the sites by collectable water and lists warnings. The header badge shows the live host 10.1.75.53.}
+\caption{Supplied contour map (Khapri, beside IIT Bhilai) analyzed with the June--September 2025 CHIRPS rainfall, in the default dark theme over Google satellite imagery. Three numbered outlets, their ponds (blue) and catchments (teal for the active site, dashed for the alternatives) sit over the 1\,m contours. The results column ranks the sites by collectable water and lists warnings. Figure~\ref{fig:annotated} labels each element of the map.}
 \label{fig:sample}
 \end{figure}
 
 \begin{figure}[htbp]
 \centering
 \begin{subfigure}[t]{0.49\linewidth}\includegraphics[width=\linewidth]{r02-examples.jpg}\caption{Example areas with real terrain.}\label{fig:examples}\end{subfigure}\hfill
-\begin{subfigure}[t]{0.49\linewidth}\includegraphics[width=\linewidth]{r03-search.jpg}\caption{Place search (Photon, OpenStreetMap data).}\label{fig:search}\end{subfigure}
+\begin{subfigure}[t]{0.49\linewidth}\includegraphics[width=\linewidth]{r03-search.jpg}\caption{Place search with Google Places; Photon (OSM) answers if Google fails or no key is set.}\label{fig:search}\end{subfigure}
 \caption{Two quick ways to reach an area other than the sample.}
 \end{figure}
 
@@ -258,7 +286,7 @@ The panel shows the selected area and its width and height in kilometres live, a
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=0.92\linewidth]{r11-upload-results.jpg}
-\caption{A real GLO-30-derived contour KML for Kanker west, uploaded and analyzed on the live server. The three outlets drain different valleys. During this run the server could not reach Overpass for this new area, so the result is honestly labelled ``Partly screened'' and ``unverified terrain candidates''; it is not presented as cleared land.}
+\caption{A real GLO-30-derived contour KML for Kanker west, uploaded and analyzed. The linework is drawn from the file, and the three outlets drain different valleys.}
 \label{fig:upload}
 \end{figure}
 
@@ -301,6 +329,7 @@ The results panel (Figure~\ref{fig:panel}) supports the decision the administrat
 \item \textbf{benchmarks} against Mission Amrit Sarovar and MGNREGA farm-pond norms~[\ref{ref:amrit},\ref{ref:mgnrega}];
 \item a \textbf{stage--storage chart} with a crosshair tooltip and a table view;
 \item \textbf{monthly rainfall bars};
+\item \textbf{links} that open the outlet in Google Maps (satellite) or Google Earth; they need no key;
 \item data \textbf{provenance}, and \textbf{exports}.
 \end{itemize}
 Each site also carries plain-language warnings: its catchment reaches the grid edge, it drains more than the small-pond cap, or runoff is more than three times, or less than half, its storage.
@@ -310,19 +339,37 @@ Each site also carries plain-language warnings: its catchment reaches the grid e
 \includegraphics[width=0.32\linewidth]{r07-results-panel-1.jpg}\hfill
 \includegraphics[width=0.32\linewidth]{r07-results-panel-2.jpg}\hfill
 \includegraphics[width=0.32\linewidth]{r07-results-panel-3.jpg}
-\caption{The complete results panel for Kanker west (live server), split into three columns. From left: ranked comparison and metrics; water balance, pond facts, benchmarks and the stage--storage chart; its table view, data provenance with the monthly CHIRPS bars, and exports.}
+\caption{The complete results panel for Kanker west, split into three columns. From left: ranked comparison, links and metrics; water balance, pond facts, benchmarks and the stage--storage chart with its table view; data provenance with the monthly CHIRPS bars, and exports. Section~\ref{sec:kanker} reproduces these numbers by hand.}
 \label{fig:panel}
 \end{figure}
 
 \subsection{Maps, 3D terrain and globe view}
-The map toolbar switches between three basemaps: OpenTopoMap topography, EOX Sentinel-2 cloudless 2025 imagery and OpenStreetMap streets. It also toggles contours and \textbf{3D}, which tilts the map over global terrain tiles with adjustable relief. The globe button zooms out to the whole Earth with an atmosphere (Figure~\ref{fig:earth}). Contours are labelled every fifth line. Before analysis they come from the survey; after a Copernicus analysis they are traced from the analysis grid. The map is created once and updated in place, so switching source or basemap never loses the selection.
+The map toolbar switches between three basemaps: OpenTopoMap topography, satellite imagery and OpenStreetMap streets. The satellite layer is Google imagery with road and place labels when a Google key is configured, and EOX Sentinel-2 cloudless 2025 otherwise. The toolbar also toggles contours and \textbf{3D}, which tilts the map over global terrain tiles with adjustable relief (cover image). The globe button zooms out to the whole Earth (Figure~\ref{fig:earth}). Contours are labelled every fifth line; over imagery the minor lines are fainter so the index lines read. Before analysis they come from the survey; after a Copernicus analysis they are traced from the analysis grid. The map is created once and updated in place, so switching source or basemap never loses the selection.
 
 \begin{figure}[htbp]
 \centering
 \begin{subfigure}[t]{0.49\linewidth}\includegraphics[width=\linewidth]{r04-example-topo.jpg}\caption{Maikal ridge front, topographic basemap with 20\,m DEM contours.}\end{subfigure}\hfill
-\begin{subfigure}[t]{0.49\linewidth}\includegraphics[width=\linewidth]{r06-globe.jpg}\caption{Globe view; the site marker sits in central India.}\end{subfigure}
+\begin{subfigure}[t]{0.49\linewidth}\includegraphics[width=\linewidth]{r06-globe.jpg}\caption{Globe projection zoomed out to the subcontinent; the site marker sits in Chhattisgarh.}\end{subfigure}
 \caption{The same analysis on a 2D topographic map and on the globe. The cover shows it in tilted 3D over satellite imagery.}
 \label{fig:earth}
+\end{figure}
+
+\subsection{Google Maps Platform layers}
+\label{sec:google}
+The Google layers are optional. The server reads a browser key from a git-ignored \code{.env} file and passes it to the page in \code{/api/config}; without it every Google feature falls back to the open sources above.
+\begin{itemize}
+\item \textbf{Satellite basemap} (Map Tiles API, 2D tiles). The planner opens a tile session, draws the Google logo on the map, and asks the viewport endpoint for the copyright text of the imagery actually in view after every move, as the tile policies require~[\ref{ref:google}].
+\item \textbf{Google 3D Earth} (Maps JavaScript API, \code{Map3DElement}). Google's Photorealistic 3D surface with the planner's selected land, catchments, ponds and numbered outlets drawn on top as 3D polygons, polylines and markers (Figure~\ref{fig:google3d}). Choosing a site flies the camera to it. The library is loaded only when this view is opened.
+\item \textbf{Place search} (Places API (New) autocomplete and details). Keystrokes and the final lookup share one session token, as billed sessions require. Photon answers if Google fails.
+\item \textbf{Satellite drape} for the 3D model (Figure~\ref{fig:inspector}), using the same tile session.
+\end{itemize}
+Google content is display-only. Nothing is cached, stored or analysed, and every number still comes from the planner's own elevation grid. Each Google view keeps the logo and attribution, and so does every screenshot in this report. If a Google layer fails (quota, key or network), an error boundary keeps the rest of the planner running.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\linewidth]{r15-google-earth.jpg}
+\caption{Google 3D Earth view of the Maikal ridge front. The teal catchment, blue pond and red outlet markers are the planner's screening results, drawn on Google's Photorealistic 3D surface. The side panel repeats the site's numbers and links to Google Earth and Google Maps.}
+\label{fig:google3d}
 \end{figure}
 
 \subsection{3D model of the analysis grid}
@@ -331,13 +378,13 @@ The map toolbar switches between three basemaps: OpenTopoMap topography, EOX Sen
 \item a hypsometric colour ramp with contours draped on the surface;
 \item the study-area outline, the tinted catchment, the pond surface at crest level, and numbered outlets for all three sites.
 \end{itemize}
-The vertical exaggeration is set automatically so that relief spans about 12\,\% of the model width (Equation~\ref{eq:exaggeration}); a slider adjusts it. \textbf{Satellite drape} textures the mesh with Sentinel-2 tiles (Figure~\ref{fig:inspector}). The exaggeration changes only the drawing, never the numbers.
+The vertical exaggeration is set automatically so that relief spans about 12\,\% of the model width (Equation~\ref{eq:exaggeration}); a slider adjusts it. \textbf{Satellite drape} textures the mesh with Google imagery, or Sentinel-2 without a key (Figure~\ref{fig:inspector}). The exaggeration changes only the drawing, never the numbers.
 
 \begin{figure}[htbp]
 \centering
 \begin{subfigure}[t]{0.49\linewidth}\includegraphics[width=\linewidth]{r08-inspector-relief.jpg}\caption{Elevation colours with contours and catchment.}\end{subfigure}\hfill
-\begin{subfigure}[t]{0.49\linewidth}\includegraphics[width=\linewidth]{r09-inspector-imagery.jpg}\caption{Sentinel-2 satellite drape on the same mesh.}\end{subfigure}
-\caption{3D inspector for the Maikal ridge front (live server).}
+\begin{subfigure}[t]{0.49\linewidth}\includegraphics[width=\linewidth]{r09-inspector-imagery.jpg}\caption{Google satellite drape on the same mesh, with its attribution.}\end{subfigure}
+\caption{3D inspector for the Maikal ridge front.}
 \label{fig:inspector}
 \end{figure}
 
@@ -348,21 +395,38 @@ The vertical exaggeration is set automatically so that relief spans about 12\,\%
 \item \textbf{Contour KML}: real contours for the selected area at a relief-based interval, with provenance and the Copernicus attribution in the file.
 \end{itemize}
 
-\subsection{Mobile layout and accessibility}
-On phones the controls slide in from the side, and the map, results and a sticky \textbf{Analyze} button stack vertically (Figure~\ref{fig:mobile}). Every grey text colour was checked against WCAG AA. About 30 colours below a 4.5:1 contrast ratio were darkened, and the minimum text size was raised. The chart palette (teal runoff, blue storage, orange collectable) passed a colour-blindness separation check. Charts have legends and table views, so colour is never the only cue. The help dialog and 3D view close with Escape.
+\subsection{Dark and light themes, icons and accessibility}
+The planner opens in a dark theme, which suits imagery and long sessions; the sun/moon button in the header switches to the light theme (Figure~\ref{fig:themes}) and the choice is remembered. The dark colours are not hand-picked one by one. \code{scripts/build\_dark\_theme.py} reads every colour in the light stylesheets and maps it by the role it plays (surface, text, border, chart mark or shadow) in the perceptual OKLCH colour space~[\ref{ref:oklab}]:
+\begin{itemize}
+\item surfaces become dark but keep the light theme's order of elevation;
+\item text becomes light with at least 4.5:1 contrast;
+\item brand fills keep their hue, and pale gridlines stay recessive.
+\end{itemize}
+Hand-tuned rules (map controls, the white Google logo on dark surfaces) live in \code{dark-extra.css}. The chart series (blue storage, teal runoff, orange collectable) were given their own dark-mode steps and checked with a palette validator on the dark surface: all three lie in the dark lightness band; the worst adjacent colour-blind separation is $\Delta E=11.9$ and the normal-vision separation 18.8 (targets 8 and 15); each has at least 3:1 contrast. Icons are the open-source Lucide set throughout.
+
+In the light theme, about 30 grey text colours below 4.5:1 were darkened and the minimum text size raised. Charts have legends and table views, so colour is never the only cue. The help dialog and the 3D views close with Escape. On phones the controls slide in from the side, and the map, results and a sticky \textbf{Analyze} button stack vertically (Figure~\ref{fig:mobile}).
+
+\begin{figure}[htbp]
+\centering
+\begin{subfigure}[t]{0.49\linewidth}\includegraphics[width=\linewidth]{r13-help.jpg}\caption{Dark theme: the ``How it works'' dialog.}\end{subfigure}\hfill
+\begin{subfigure}[t]{0.49\linewidth}\includegraphics[width=\linewidth]{r16-light-theme.jpg}\caption{Light theme with the topographic basemap.}\end{subfigure}
+\caption{The two themes. The light theme is the original, contrast-checked design; the dark theme is generated from it.}
+\label{fig:themes}
+\end{figure}
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=0.3\linewidth]{r10-mobile-1.jpg}\hspace{6mm}
 \includegraphics[width=0.3\linewidth]{r10-mobile-2.jpg}
-\caption{Mobile layout (390\,px wide) on the live server, shown in two halves.}
+\caption{Mobile layout (390\,px wide), shown in two halves.}
 \label{fig:mobile}
 \end{figure}
 
 % ------------------------------------------------------------------ 5
+\clearpage
 \section{Algorithms}
 \label{sec:algorithms}
-The analysis is deterministic. Given the same polygon, elevation source and settings it returns the same result, so results can be checked and reproduced. Algorithm version: \code{priority-flood-d8-impoundment-v4}.
+The analysis is deterministic. Given the same polygon, elevation source and settings it returns the same result, so results can be checked and reproduced. Algorithm version: \code{priority-flood-d8-\allowbreak impoundment-v4}. This section states the method; Section~\ref{sec:worked} applies every step to a small grid with the numbers written out.
 
 \subsection{Coordinates and grids}
 The polygon is validated: a simple polygon of at most 1,000 vertices, 0.25--10,000\,ha, and no wider than 20\,km. Longitude $\lambda$ and latitude $\phi$ are projected to local metres around an origin $(\lambda_0,\phi_0)$ with $R=6{,}371{,}000$\,m:
@@ -370,26 +434,29 @@ The polygon is validated: a simple polygon of at most 1,000 vertices, 0.25--10,0
 x = R\cos\phi_0\,(\lambda-\lambda_0),\qquad y = R\,(\phi-\phi_0),\qquad A_{\mathrm{cell}} = |\Delta x\,\Delta y|.
 \end{equation}
 
-\paragraph{Contour sources.} Contour vertices are interpolated to a regular grid of up to 220 cells along the longer side (the sample uses 125). A linear (triangulated) surface is flat wherever all three vertices of a triangle lie on one contour, which happens on hilltops and valley floors. With 20\,m contours, 22.5\,\% of cells were flat, and a ``pond'' there became a flat patch whose storage was simply footprint $\times$ stage. Phase~3 therefore uses a $C^1$ Clough--Tocher surface $z_{\mathrm{CT}}$, bounded by the contour interval $\Delta$:
+\paragraph{Contour sources.} Contour vertices are interpolated to a regular grid of up to 220 cells along the longer side (the sample uses 125). A linear (triangulated) surface is flat wherever all three vertices of a triangle lie on one contour, which happens on hilltops and valley floors. With 20\,m contours, 22.5\,\% of cells were flat, and a ``pond'' there became a flat patch whose storage was simply footprint $\times$ stage. Phase~3 therefore uses a $C^1$ Clough--Tocher surface $z_{\mathrm{CT}}$~[\ref{ref:ct}], bounded by the contour interval $\Delta$:
 \begin{equation}
 \tilde z = \operatorname{clip}\bigl(z_{\mathrm{CT}},\; z_{\mathrm{lin}}-\Delta,\; z_{\mathrm{lin}}+\Delta\bigr).
 \end{equation}
-Between two drawn contours the ground cannot cross another contour level, so this bound keeps the smooth surface consistent with the survey. It removes the overshoot that unbounded cubic interpolation produces (318\,m on a survey whose top contour is 298\,m). Outside the linework's convex hull the nearest value is used. The Phase~2 route keeps linear interpolation, so its published results stay reproducible.
+Between two drawn contours the ground cannot cross another contour level, so this bound keeps the smooth surface consistent with the survey. It removes the overshoot that unbounded cubic interpolation produces (318\,m on a survey whose top contour is 298\,m). Outside the linework's convex hull the nearest value is used. The Phase~2 route keeps linear interpolation, so its published results stay reproducible. Figure~\ref{fig:interp} illustrates the difference.
 
 \paragraph{Copernicus source.} The selected area's bounding box is buffered by 30\,\% of its span, and by at least 0.009\textdegree{} ($\approx$1\,km). The 1\textdegree{} GLO-30 Cloud-Optimized GeoTIFFs that cover it are read from AWS Open Data and resampled bilinearly to at most $280\times280$ cells ($\approx$30\,m). Any gap is filled from Microsoft Planetary Computer's copy. A box that crosses tile seams was tested and has no gaps.
 
 \subsection{Depression filling, D8 routing and accumulation}
-Depressions are filled with a priority flood from the grid edge. Cells are visited in order of spill elevation, and each unvisited neighbour $n$ of the current cell $c$ is raised to at least $z'_c+\varepsilon$ ($\varepsilon=10^{-5}$\,m). Flats therefore drain without cycles:
+Depressions are filled with a priority flood from the grid edge~[\ref{ref:barnes}]. Cells are visited in order of spill elevation, and each unvisited neighbour $n$ of the current cell $c$ is raised to at least $z'_c+\varepsilon$ ($\varepsilon=10^{-5}$\,m). Flats therefore drain without cycles:
 \begin{equation}
 z'_n = \max\left(z_n,\; z'_c + \varepsilon\right).
+\label{eq:flood}
 \end{equation}
-Each cell $i$ drains to the neighbour $n\in N_8(i)$ with the steepest downhill grade, where $d(i,n)$ is the orthogonal or diagonal distance:
+Each cell $i$ drains to the neighbour $n\in N_8(i)$ with the steepest downhill grade (the D8 rule~[\ref{ref:d8}]), where $d(i,n)$ is the orthogonal or diagonal distance:
 \begin{equation}
 f(i) = \underset{n\in N_8(i),\;z'_n<z'_i}{\operatorname{arg\,max}}\;\frac{z'_i-z'_n}{d(i,n)}.
+\label{eq:d8}
 \end{equation}
 Contributing area accumulates along this graph in topological order:
 \begin{equation}
 A(i) = A_{\mathrm{cell}} + \sum_{k:\,f(k)=i} A(k),\qquad C(o)=\{\,i : \text{the flow path from } i \text{ reaches } o\,\}.
+\label{eq:acc}
 \end{equation}
 
 \subsection{Screening}
@@ -397,7 +464,7 @@ OpenStreetMap features for the area (plus a margin of about 200\,m) are read fro
 
 \begin{table}[htbp]
 \centering\small
-\begin{tabular}{@{}ll@{}}
+\begin{tabularx}{0.9\linewidth}{@{}Yl@{}}
 \toprule
 \textbf{Mapped feature (OSM tags)} & \textbf{Exclusion buffer}\\
 \midrule
@@ -408,7 +475,7 @@ Motorway, trunk / primary / secondary / tertiary & 35 / 30 / 25 / 18\,m\\
 Unclassified, residential, road / service, living street & 12 / 8\,m\\
 Tracks, paths, footways and other minor ways / railways & 4 / 30\,m\\
 \bottomrule
-\end{tabular}
+\end{tabularx}
 \caption{Approximate setbacks. They are screening margins, not legal setbacks. The prototype used a flat 35\,m for every road, including footpaths, which removed large amounts of village land.}
 \label{tab:buffers}
 \end{table}
@@ -424,18 +491,21 @@ Taken in order of contributing area, up to 40 are kept, each at least $\max(200\
 For an outlet $o$ at ground elevation $z_o$ and water stage $h$, an embankment would hold water up to the crest $h_c = z_o + h$. The flooded set $P$ contains every cell $j$ that is connected to $o$ by 4-neighbour steps within $P$ and satisfies all of:
 \begin{equation}
 j\in C(o),\qquad z_j \le h_c,\qquad j\ \text{allowed},\qquad \lVert \mathbf{x}_j-\mathbf{x}_o\rVert \le r,
+\label{eq:flooded}
 \end{equation}
 where $r = \max(100\,\text{m}, 4\text{ cells})$ keeps the pond at village scale. Storage, footprint and indicative embankment length are then
 \begin{equation}
 V_S = \sum_{j\in P}(h_c - z_j)\,A_{\mathrm{cell}},\qquad A_P = |P|\,A_{\mathrm{cell}},\qquad
 L_E = \sum_{\substack{(j,k):\, j\in P,\ k\notin C(o)\\ z_k\le h_c}} \ell_{jk},
+\label{eq:storage}
 \end{equation}
-where $\ell_{jk}$ is the length of the shared cell edge. Lower ground \emph{outside} the catchment is where water would escape, so its edge length is the bund that has to be built. Repeating the calculation for $h = 0.5,1,\dots,6$\,m gives the stage--storage table. The Phase~3 prototype flooded every connected low cell, including cells downstream of the outlet that a pond cannot hold. Section~\ref{sec:review} shows the effect.
+where $\ell_{jk}$ is the length of the shared cell edge. Lower ground \emph{outside} the catchment is where water would escape, so its edge length is the bund that has to be built. Repeating the calculation for $h = 0.5,1,\dots,6$\,m gives the stage--storage table. The flooding uses the raw grid $z$, not the filled $z'$: a real depression inside the pond holds water. The Phase~3 prototype flooded every connected low cell, including cells downstream of the outlet that a pond cannot hold. Section~\ref{sec:review} shows the effect.
 
 \subsection{Rainfall, water volume and ranking}
 With rainfall depth $P_{\mathrm{mm}}$ (CHIRPS at the area centroid, or manual), catchment area $A_C$ and runoff coefficient $C$:
 \begin{equation}
 V_R = \frac{P_{\mathrm{mm}}}{1000}\,A_C\,C,\qquad V_c = \min(V_R, V_S),\qquad F = V_R / V_S.
+\label{eq:runoff}
 \end{equation}
 $V_c$ is the illustrative collectable volume for one fill, and $F$ is the fill ratio. The 40 candidates are sorted by the key
 \[
@@ -464,7 +534,7 @@ z' <- priority_flood(grid.z);  f <- steepest_D8(z');  A <- accumulate(f)
 allowed <- inside polygon AND NOT (mapped water OR built land)
 outlets <- separated cells with 1 ha <= A <= A_max, allowed, not beside a major channel   (<= 40)
 for each outlet o:
-    C(o) <- upstream cells;  P <- flood_fill(o, crest = z_o + h, within C(o), allowed, radius r)
+    C(o) <- upstream cells;  P <- flood_fill(o, crest = z_o + h, within C(o), allowed, radius r)   # on raw z
     V_S, A_P, L_E, stage table;  V_R = P_mm/1000 * A_C * C;  V_c = min(V_R, V_S)
 rank by (V_c, V_S/L_E, A_C);  pick 3 with non-overlapping ponds and distinct catchments
 return sites, GeoJSON geometries, contours, 3D preview, rainfall, screening status and limitations
@@ -487,20 +557,268 @@ Copernicus buffer / grid & 30\,\% ($\geq$1\,km) / $\leq280^2$ cells & fixed\\
 \end{tabularx}
 
 % ------------------------------------------------------------------ 6
+\clearpage
+\section{How the water volume is calculated: a worked example}
+\label{sec:worked}
+This section follows one pond through the whole method, the way a textbook would. The grid is small enough to check by hand: $7\times7$ cells of \WEcell\,m, so each cell covers $A_{\mathrm{cell}}=\WEcell\times\WEcell=\WEcellarea$\,\mtwo. It is a synthetic valley that drains south, with one pit on its floor. Every number, arrow and depth below was computed by the planner's own functions; \code{scripts/report\_figures.py} runs them and writes the figures, so the text cannot drift from the code:
+\begin{itemize}
+\item \code{\_condition\_dem}: priority flood;
+\item \code{\_flow\_graph}: D8 directions and accumulation;
+\item \code{UpstreamIndex}: catchments;
+\item \code{impoundment} and \code{stage\_curve}: pond storage;
+\item \code{\_grid\_from\_contours}: contour interpolation.
+\end{itemize}
+The same steps are then repeated for a real site in Section~\ref{sec:kanker}.
+
+\begin{keybox}[title=The whole calculation in one line]
+\[
+V_c \;=\; \min\Bigl(\;\underbrace{\tfrac{P_{\mathrm{mm}}}{1000}\,C\,A_C}_{\text{runoff } V_R}\;,\;\underbrace{\textstyle\sum_{j\in P}(h_c-z_j)\,A_{\mathrm{cell}}}_{\text{storage } V_S}\;\Bigr),
+\qquad h_c = z_o + h .
+\]
+Everything else in the method decides \emph{which} cells form the catchment $C(o)$ (Steps 1--3) and the pond $P$ (Step 4).
+\end{keybox}
+
+\subsection*{Step 0: From contour lines to a grid (contour sources only)}
+A contour map gives elevations only \emph{on} the lines. The planner has to guess the ground between them, and the guess matters for storage. Figure~\ref{fig:interp} shows a synthetic ridge drawn as 20\,m contours and gridded both ways by \code{\_grid\_from\_contours}. The linear surface stops at the top contour: every triangle up there has three vertices on the same line. It flattens the summit at \WElinpeak\,m, while the true top is \WEtruepeak\,m. Inside the closed 340\,m contour, \WEflatlinear\,\% of the linear cells are exactly flat and \WEflatsmooth\,\% of the bounded smooth cells are. A pond placed on a flat terrace would have a storage of footprint $\times$ stage, which is too much.
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}
+\begin{axis}[width=0.86\linewidth,height=62mm,xmin=-560,xmax=560,ymin=296,ymax=400,
+  xlabel={Distance across the ridge (m)},ylabel={Elevation (m)},label style={font=\footnotesize},
+  tick label style={font=\footnotesize},ytick={300,320,340,360,380,400},ymajorgrids,grid style={line},axis lines*=left,
+  legend style={font=\footnotesize,draw=none,fill=none,at={(0.01,0.98)},anchor=north west}]
+\gen{we_interp_coords.tex}
+\legend{True surface,Linear (TIN): flat top and terraces,Bounded Clough--Tocher (Phase 3)}
+\node[font=\scriptsize,text=muted,anchor=west] at (axis cs:200,383) {gridlines = the 20\,m contours};
+\end{axis}
+\end{tikzpicture}
+\caption{Profile through a synthetic ridge after gridding its 20\,m contours. The bounded smooth surface follows the true shape between contours and never crosses the next contour level.}
+\label{fig:interp}
+\end{figure}
+
+\subsection*{Step 1: The elevation grid and the pit}
+Figure~\ref{fig:dem}a is the grid the analysis starts from. Rows run north (0) to south (6) and columns west (0) to east (6); darker cells are higher. Cell (2,3) is a \emph{pit}: at \WEpitz\,m it is lower than all eight of its neighbours, so water routed into it would have nowhere to go.
+
+\subsection*{Step 2: Fill the pit (priority flood)}
+Routing needs every cell to have a way out. The priority flood (Equation~\ref{eq:flood}) starts from all edge cells in a queue ordered by elevation. It always takes the lowest cell out of the queue and raises each unvisited neighbour to at least that cell's height plus $\varepsilon$. The water level therefore rises from the outside in, like a tank filling. The pit is reached from its lowest neighbour, (3,3) at 101.8\,m, and is raised to $\WEpitfilled\,\text{m}+\varepsilon$, just above that neighbour (Figure~\ref{fig:dem}b). It now drains south into (3,3). No other cell changes.
+
+\begin{figure}[htbp]
+\centering
+\begin{subfigure}[t]{0.49\linewidth}\centering
+\begin{tikzpicture}\gen{we_dem_raw.tex}\end{tikzpicture}
+\caption{Raw elevation $z$ (m).}
+\end{subfigure}\hfill
+\begin{subfigure}[t]{0.49\linewidth}\centering
+\begin{tikzpicture}\gen{we_dem_filled.tex}\end{tikzpicture}
+\caption{Filled elevation $z'$ used for routing.}
+\end{subfigure}
+\caption{The worked-example grid (\WEcell\,m cells, \WElo--\WEhi\,m). Only the pit changes when the grid is filled. Storage is later measured on the \emph{raw} grid, so the pit still holds water in the pond.}
+\label{fig:dem}
+\end{figure}
+
+\subsection*{Step 3: Flow directions, accumulation and the catchment}
+Each cell drains to the neighbour with the steepest downhill grade (Equation~\ref{eq:d8}). Table~\ref{tab:grades} does this by hand for cell \WEprobe{} (\WEprobez\,m), just west of the outlet. A diagonal step is $\sqrt2\times20=28.3$\,m long, so a drop of 1.4\,m over 28.3\,m ($0.0495$) beats 0.7\,m over 20\,m ($0.0350$). The cell drains south-east to \WEprobeto{}, past the outlet, not into it.
+
+\begin{table}[htbp]
+\centering\small
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+\textbf{Neighbour} & \textbf{$z'_n$ (m)} & \textbf{$d$ (m)} & \textbf{Drop $z'_i-z'_n$ (m)} & \textbf{Grade}\\
+\midrule
+\genrows{we_grades_rows.tex}
+\bottomrule
+\end{tabular}
+\caption{The D8 choice for cell \WEprobe{}. Negative grades are uphill and never chosen; the steepest downhill neighbour (bold) wins.}
+\label{tab:grades}
+\end{table}
+
+Following the arrows downstream and counting how many cells pass through each cell gives the accumulation $A(i)/A_{\mathrm{cell}}$ (Equation~\ref{eq:acc}); the orange numbers in Figure~\ref{fig:d8}a. The catchment of the outlet $o=(5,3)$ is every cell whose arrows lead to it: \WEcatchcells{} cells, so
+\[
+A_C = \WEcatchcells \times \WEcellarea\ \text{m}^2 = \WEcatcharea\ \text{m}^2 = \WEcatchha\ \text{ha}.
+\]
+The cells either side of the outlet are \emph{not} in it, as Table~\ref{tab:grades} showed. This will decide where the bund goes.
+
+\begin{figure}[htbp]
+\centering
+\begin{subfigure}[t]{0.49\linewidth}\centering
+\begin{tikzpicture}\gen{we_d8.tex}\end{tikzpicture}
+\caption{D8 arrows, accumulation in cells (orange), and the catchment $C(o)$ of the outlet (teal, ringed).}
+\end{subfigure}\hfill
+\begin{subfigure}[t]{0.49\linewidth}\centering
+\begin{tikzpicture}\gen{we_plan.tex}\end{tikzpicture}
+\caption{Pond at $h=\WEstage$\,m: water depth $h_c-z_j$ (m) in blue cells, bund edges \bundkey{} and ground elevations elsewhere.}
+\end{subfigure}
+\caption{Plan views of the worked example. \swatch{runoff!22} catchment $C(o)$ \quad \swatch{storage!70} pond $P$ \quad \bundkey{} embankment edge \quad {\color{collect}$\bigcirc$} outlet $o$.}
+\label{fig:d8}
+\end{figure}
+
+\subsection*{Step 4: Flood the pond to the crest}
+Put a \WEstage\,m embankment at the outlet, whose ground is $z_o=\WEoutletz$\,m. Water can rise to the crest
+\[
+h_c = z_o + h = \WEoutletz + \WEstage = \WEcrest\ \text{m}.
+\]
+Starting at the outlet, the flood fill steps to 4-neighbours that satisfy Equation~\ref{eq:flooded}. Each such cell lies in the catchment, is no higher than the crest, is allowed land, and is within 100\,m. \WEpondcells{} cells qualify (Figure~\ref{fig:d8}b). The pit joins at this stage because its neighbour (3,3) floods first. Each cell holds a column of water $h_c-z_j$ deep, so
+\begin{align*}
+V_S &= \sum_{j\in P}(h_c - z_j)\,A_{\mathrm{cell}}
+     = (\WEdepthterms)\times\WEcellarea\\
+    &= \WEdepthsum\ \text{m}\times\WEcellarea\ \text{m}^2 = \mathbf{\WEstorage\ m^3},\\[2pt]
+A_P &= \WEpondcells\times\WEcellarea = \WEfootprint\ \text{m}^2,\qquad \bar d = V_S/A_P = \WEmeandepth\ \text{m}.
+\end{align*}
+Water escapes wherever a pond cell touches lower ground \emph{outside} the catchment. There are \WEbundedges{} such cell edges: the outlet's own south, west and east edges, and the south edges of the two cells beside it. Those are the cells from Table~\ref{tab:grades} that drain past the outlet. So the indicative bund is $L_E = \WEbundedges\times\WEcell = \WEbund$\,m. Figure~\ref{fig:sections} shows the same pond in cross-section, and Figure~\ref{fig:wire} in 3D.
+
+\begin{figure}[htbp]
+\centering
+\begin{subfigure}[t]{0.49\linewidth}\centering
+\begin{tikzpicture}\gen{we_section_along.tex}\end{tikzpicture}
+\caption{Along the valley floor (column 3). The dashed navy line is the filled pit; the bund closes the outlet's downstream edge.}
+\end{subfigure}\hfill
+\begin{subfigure}[t]{0.49\linewidth}\centering
+\begin{tikzpicture}\gen{we_section_across.tex}\end{tikzpicture}
+\caption{Across the valley (row 4). Hatched cells lie outside $C(o)$ and never count as storage, even where they are low.}
+\end{subfigure}
+\caption{Cross-sections of the worked pond. Each blue column is one cell's water depth $h_c-z_j$; the storage is their sum times the cell area. Vertical scale exaggerated.}
+\label{fig:sections}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}
+\begin{axis}[width=0.8\linewidth,height=78mm,view={-32}{38},xmin=0,xmax=140,ymin=0,ymax=140,zmin=99,zmax=107.5,
+  xlabel={east (m)},ylabel={north (m)},zlabel={$z$ (m)},label style={font=\footnotesize},tick label style={font=\scriptsize},
+  xtick={0,40,80,120},ytick={0,40,80,120},ztick={100,102,104,106}]
+\gen{we_wireframe.tex}
+\end{axis}
+\end{tikzpicture}
+\caption{Wireframe of the worked grid (cell centres, vertical scale exaggerated) with the pond surface at the crest (\WEcrest\,m, blue) and the bund edges (orange). The planner's 3D inspector (Figure~\ref{fig:inspector}) draws the real grid the same way.}
+\label{fig:wire}
+\end{figure}
+
+\subsection*{Step 5: The stage--storage curve}
+Repeating Step~4 for other embankment heights gives Table~\ref{tab:westage}. Storage grows faster than stage, because a higher crest both deepens the flooded cells and floods new ones. The area column jumps in whole cells, and a longer bund is needed each time the water reaches another low edge outside the catchment. At 0.5\,m only the outlet cell floods ($0.5\times\WEcellarea=200$\,\mthree{}); the pit joins at 2\,m. This is the curve the planner draws for every site.
+
+\begin{table}[htbp]
+\centering
+\begin{minipage}[c]{0.44\linewidth}\centering\small
+\begin{tabular}{@{}rrrr@{}}
+\toprule
+\textbf{$h$ (m)} & \textbf{$A_P$ (\mtwo)} & \textbf{$V_S$ (\mthree)} & \textbf{$L_E$ (m)}\\
+\midrule
+\genrows{we_stage_rows.tex}
+\bottomrule
+\end{tabular}
+\end{minipage}\hfill
+\begin{minipage}[c]{0.54\linewidth}\centering
+\begin{tikzpicture}
+\begin{axis}[width=\linewidth,height=52mm,xmin=0,xmax=3.1,ymin=0,
+  xlabel={Water stage $h$ (m)},ylabel={Storage $V_S$ (\mthree)},label style={font=\footnotesize},
+  tick label style={font=\footnotesize},scaled y ticks=false,ymajorgrids,grid style={line},axis lines*=left]
+\gen{we_stage_plot.tex}
+\draw[collect,thick] (axis cs:\WEstage,0) -- (axis cs:\WEstage,\WEstoragenum);
+\node[font=\scriptsize,text=muted,anchor=west] at (axis cs:\WEstage,900) {worked stage};
+\end{axis}
+\end{tikzpicture}
+\end{minipage}
+\caption{Stage--area--storage--bund table of the worked pond, computed by \code{stage\_curve}, and its curve.}
+\label{tab:westage}
+\end{table}
+
+\subsection*{Step 6: Runoff and the collectable volume}
+\begin{workbox}[title=Worked calculation: water balance of the example pond]
+Rainfall $P_{\mathrm{mm}}=\WErain$\,mm (the June--September 2025 total used for Kanker west below), runoff coefficient $C=\WEC$ (hilly land), catchment $A_C=\WEcatcharea$\,\mtwo:
+\[
+V_R = \frac{P_{\mathrm{mm}}}{1000}\,C\,A_C = \frac{\WErain}{1000}\times\WEC\times\WEcatcharea = \WErunoff\ \text{m}^3 .
+\]
+\[
+V_c = \min(V_R, V_S) = \min(\WErunoff,\ \WEstorage) = \mathbf{\WEcollect\ m^3}\quad\text{(limited by storage)},\qquad F = V_R/V_S = \WEfill .
+\]
+The season delivers \WEfill{} times what the pond holds. The pond fills, the surplus must pass a safe overflow, and the planner shows the ``limited by pond size'' label and a spillway warning when $F>3$.
+\end{workbox}
+
+\subsection{The same calculation on a real site: Kanker west}
+\label{sec:kanker}
+The best site in the Kanker west example (Copernicus GLO-30, $\approx$30\,m cells) runs through exactly the same steps on a $280\times280$ grid. Its values come from the planner's API response, and Figure~\ref{fig:panel} shows the same values in the interface:
+\begin{workbox}[title={Worked calculation: Kanker west, site 1 at $h=2.5$\,m}]
+\begin{tabularx}{\linewidth}{@{}L{52mm}Y@{}}
+Rainfall, CHIRPS Jun--Sep 2025 & $P_{\mathrm{mm}}=\KWrain$\,mm\\
+Catchment $C(o)$ & $A_C=\KWcatchha$\,ha $=\KWcatchm$\,\mtwo\\
+Runoff & $V_R = \frac{1287.3}{1000}\times0.35\times\KWcatchm = \KWrunoff$\,\mthree\\
+Pond at crest $h_c=\KWcrest$\,m & $A_P=\KWfootprint$\,\mtwo, $\bar d=\KWmeandepth$\,m, $V_S=\KWstorage$\,\mthree\\
+Bund & $L_E\approx\KWbund$\,m\\
+Collectable & $V_c=\min(\KWrunoff,\ \KWstorage)=\mathbf{\KWcollect}$\,\mthree{} (storage-limited, $F=\KWfill$)\\
+\end{tabularx}
+\end{workbox}
+That is more than the Mission Amrit Sarovar plains benchmark (at least 1 acre and about 10,000\,\mthree{}). It equals about 61 MGNREGA model farm ponds of 880\,\mthree{}. The stage--storage curve (Figure~\ref{fig:stage}) shows how a higher bund trades embankment length for water: the season's runoff would fill the pond to about 6\,m.
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}
+\begin{axis}[width=0.8\linewidth,height=62mm,xmin=0,xmax=6.2,ymin=0,ymax=160000,
+  xlabel={Water stage above outlet (m)},ylabel={Storage (\mthree)},
+  y tick label style={/pgf/number format/1000 sep={\mathord{,}},font=\footnotesize},x tick label style={font=\footnotesize},
+  label style={font=\footnotesize},scaled y ticks=false,ymajorgrids,grid style={line},axis lines*=left,
+  legend style={font=\footnotesize,draw=none,at={(0.02,0.98)},anchor=north west}]
+\gen{kw_stage_plot.tex}
+\node[font=\scriptsize,text=muted,anchor=west] at (axis cs:2.55,20000) {selected 2.5\,m stage};
+\end{axis}
+\end{tikzpicture}
+\caption{Stage--storage curve for the best Kanker west site, from the API response. Storage rises with stage while the embankment grows from 30\,m to 240\,m.}
+\label{fig:stage}
+\end{figure}
+
+\subsection{Reading the result on the map}
+Figure~\ref{fig:annotated} labels each element of a finished analysis on the real map, using the supplied Khapri contours.
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}
+\node[inner sep=0,anchor=south west] (map) at (0,0) {\includegraphics[width=0.6\linewidth]{r01-map.jpg}};
+\begin{scope}[x={(map.south east)},y={(map.north west)}]
+  % left-hand labels
+  \draw[callout] (0.434,0.830) -- (-0.03,0.93) node[calloutlabel,anchor=east,align=right] {Selected land (dashed): the area the user drew or picked};
+  \node[calloutdot] at (0.434,0.830) {};
+  \draw[callout] (0.284,0.580) -- (-0.03,0.70) node[calloutlabel,anchor=east,align=right] {Shivnath river: mapped water, excluded with its setback};
+  \node[calloutdot] at (0.284,0.580) {};
+  \draw[callout] (0.415,0.523) -- (-0.03,0.50) node[calloutlabel,anchor=east,align=right] {1\,m contours of the supplied map; index lines brighter};
+  \node[calloutdot] at (0.415,0.523) {};
+  \draw[callout] (0.499,0.342) -- (-0.03,0.30) node[calloutlabel,anchor=east,align=right] {Alternative sites 2 and 3, each with its own pond};
+  \node[calloutdot] at (0.499,0.342) {};
+  \draw[callout] (0.087,0.105) -- (-0.03,0.12) node[calloutlabel,anchor=east,align=right] {Scale bar and legend};
+  \node[calloutdot] at (0.087,0.105) {};
+  % right-hand labels
+  \draw[callout] (0.728,0.789) -- (1.03,0.86) node[calloutlabel,anchor=west,align=left] {Pond at crest level (blue), here site 2};
+  \node[calloutdot] at (0.728,0.789) {};
+  \draw[callout] (0.836,0.394) -- (1.03,0.60) node[calloutlabel,anchor=west,align=left] {Outlet $o$ of the best site: embankment location};
+  \node[calloutdot] at (0.836,0.394) {};
+  \draw[callout] (0.808,0.276) -- (1.03,0.36) node[calloutlabel,anchor=west,align=left] {Catchment $C(o)$ of the active site (teal): all land draining to $o$};
+  \node[calloutdot] at (0.808,0.276) {};
+  \draw[callout] (0.621,0.095) -- (1.03,0.12) node[calloutlabel,anchor=west,align=left] {Google logo and imagery attribution};
+  \node[calloutdot] at (0.621,0.095) {};
+\end{scope}
+\end{tikzpicture}
+\caption{Annotated map of the Khapri analysis (crop of Figure~\ref{fig:sample}). Site~1 drains 41.9\,ha and stores 47,291\,\mthree{} at 2.5\,m; its catchment runs beyond the supplied contours, so the planner warns that its area may be underestimated.}
+\label{fig:annotated}
+\end{figure}
+
+% ------------------------------------------------------------------ 7
+\clearpage
 \section{Data sources, provenance and licences}
 \label{sec:data}
-\begin{tabularx}{\linewidth}{@{}L{38mm}L{34mm}Y@{}}
+\begin{tabularx}{\linewidth}{@{}L{40mm}L{34mm}Y@{}}
 \toprule
 \textbf{Source} & \textbf{Used for} & \textbf{Licence and attribution}\\
 \midrule
 Copernicus DEM GLO-30 via AWS Open Data~[\ref{ref:glo30}] (fallback: Planetary Computer) & Analysis elevation (surface model, EGM2008 heights), contour export & \copyright{} DLR e.V. 2010--2014 and \copyright{} Airbus Defence and Space GmbH 2014--2018, provided under COPERNICUS by the EU and ESA\\
 CHIRPS v3 monthly~[\ref{ref:chirps}] & Rainfall & CC BY 4.0; doi:10.15780/G2JQ0P\\
 OpenStreetMap via Overpass~[\ref{ref:overpass}] & Water and built-land screening & ODbL, \copyright{} OpenStreetMap contributors\\
+Google Map Tiles API~[\ref{ref:google}] (optional) & Satellite basemap and 3D drape & Google Maps Platform terms: display only, no caching or storage, Google logo and viewport attribution shown\\
+Google Maps JavaScript API, Photorealistic 3D (optional) & Google 3D Earth view & As above; attribution drawn by Google's element\\
+Google Places API (New) (optional) & Place search & As above; ``Google Maps'' logo on the results\\
 OpenTopoMap & Topographic basemap & CC-BY-SA\\
-EOxCloudless 2025~[\ref{ref:eox}] & Satellite basemap and 3D drape & CC BY-NC-SA 4.0: non-commercial academic use\\
+EOxCloudless 2025~[\ref{ref:eox}] & Satellite basemap and drape without a Google key & CC BY-NC-SA 4.0: non-commercial academic use\\
 OpenStreetMap tiles & Street basemap & OSMF tile usage policy\\
 Terrain Tiles on AWS & MapLibre 3D terrain only & SRTM and GMTED2010 courtesy of USGS; ETOPO1 courtesy of NOAA\\
-Photon (komoot) & Place search & OSM data; public server used within fair use\\
+Photon (komoot) & Place search without Google & OSM data; public server used within fair use\\
 \bottomrule
 \end{tabularx}
 
@@ -509,6 +827,7 @@ Two sources were deliberately rejected after checking their terms:
 \item \textbf{Esri World Imagery} requires an ArcGIS account for this kind of use.
 \item \textbf{The OpenStreetMap editing API}, which the prototype used, is reserved for editing, not read-only applications. It also refused a 14$\times$12\,km area.
 \end{itemize}
+The Google key is a browser key: any page that uses it exposes it to the browser. It is therefore kept out of the public repository (in a git-ignored \code{.env} on the server), and its quota is limited on Google's side. Screenshots with Google content keep the logo and attribution, as Google's guidelines for maps in documents require~[\ref{ref:geoguide}].
 
 \begin{warnbox}[title=Provenance of the supplied contour map]
 \code{contours\_1m.kml} covers 81.281--81.313\textdegree E, 21.240--21.264\textdegree N. That is Khapri village farmland between the IIT Bhilai campus (centre about 81.318\textdegree E, 21.245\textdegree N) and the Shivnath river, and only a thin strip overlaps the campus. Its internal structure (a root \code{Folder} named \code{ContourMapGenerator} and lxml \code{py:pytype} attributes) matches exports from the free Contour Map Generator~[\ref{ref:cmg}], which traces roughly 30\,m satellite elevation. The 1\,m contour interval is therefore finer than the real precision of the data. The planner labels it as supplied contours, not a field survey, and says so in its limitations.
@@ -523,7 +842,7 @@ Better sources for detailed design include:
 \end{itemize}
 Any DEM can be converted with \code{gdal\_contour -f KML -i 5 -a elevation dem.tif out.kml}, and the planner reads the \code{elevation} attribute.
 
-% ------------------------------------------------------------------ 7
+% ------------------------------------------------------------------ 8
 \section{Verified example areas}
 \label{sec:examples}
 Each area was run end to end with the final algorithm: GLO-30 elevation, the CHIRPS June--September 2025 total, Overpass screening, three ranked sites and contour export. Its contours are shipped in \code{contour-maps/real/}. The areas were chosen for real hill-to-plain relief with villages and seasonal drainage. The Ralegan Siddhi, Hiware Bazar, Alwar, Sukhomajri and Abreha we Atsbeha areas are known for community watershed work.
@@ -554,7 +873,7 @@ Abreha we Atsbeha & Tigray, Ethiopia & 1,926--2,539 & 681 & 54.2 & 26,191\\
 \begin{figure}[htbp]
 \centering
 \begin{tikzpicture}
-\begin{axis}[xbar, width=0.95\linewidth, height=78mm, bar width=6pt, xmin=0,
+\begin{axis}[xbar, width=0.8\linewidth, height=78mm, bar width=6pt, xmin=0,
   symbolic y coords={Abreha we Atsbeha,Sukhomajri,Alwar johads,Hiware Bazar,Ralegan Siddhi,Mainpat plateau,Sihawa,Kanker west,Maikal ridge front,Dongargarh ridge,Khapri sample},
   ytick=data, y tick label style={font=\footnotesize}, x tick label style={font=\footnotesize,/pgf/number format/1000 sep={\mathord{,}}},
   xlabel={June--September 2025 CHIRPS rainfall (mm)}, xlabel style={font=\footnotesize},
@@ -566,29 +885,7 @@ Abreha we Atsbeha & Tigray, Ethiopia & 1,926--2,539 & 681 & 54.2 & 26,191\\
 \caption{Monsoon rainfall read from CHIRPS for each example. The drought-prone Maharashtra villages receive half the rainfall of the Chhattisgarh sites. For comparison, the IMD 1991--2020 normal for Raipur is about 1,145\,mm for June--September.}
 \end{figure}
 
-For Kanker west the stage--storage curve shows how a higher bund trades embankment length for water (Figure~\ref{fig:stage}). At the default 2.5\,m stage the pond holds 53,625\,\mthree{}. The season's runoff of about 140,000\,\mthree{} would fill it to about 6\,m. That exceeds the Mission Amrit Sarovar plains benchmark (at least 1 acre and about 10,000\,\mthree{}) and equals about 61 MGNREGA model farm ponds.
-
-\begin{figure}[htbp]
-\centering
-\begin{tikzpicture}
-\begin{axis}[width=0.8\linewidth,height=62mm,xmin=0,xmax=6.2,ymin=0,ymax=160000,
-  xlabel={Water stage above outlet (m)},ylabel={Storage (\mthree)},
-  y tick label style={/pgf/number format/1000 sep={\mathord{,}},font=\footnotesize},x tick label style={font=\footnotesize},
-  label style={font=\footnotesize},scaled y ticks=false,ymajorgrids,grid style={line},axis lines*=left,
-  legend style={font=\footnotesize,draw=none,at={(0.02,0.98)},anchor=north west}]
-\addplot[storage,very thick,mark=*,mark size=1.6pt] coordinates {(0,0) (0.5,15205) (1,22982) (1.5,32205) (2,42559) (2.5,53625) (3,65076) (3.5,77255) (4,89864) (5,115082) (6,140301)};
-\addlegendentry{Pond storage}
-\addplot[runoff,very thick,dashed,domain=0:6.2] {140002};
-\addlegendentry{June--September runoff}
-\draw[collect,thick] (axis cs:2.5,0) -- (axis cs:2.5,53625);
-\node[font=\scriptsize,text=muted,anchor=west] at (axis cs:2.55,20000) {selected 2.5\,m stage};
-\end{axis}
-\end{tikzpicture}
-\caption{Stage--storage curve for the best Kanker west site (live result). Storage rises with stage while the embankment grows from 30\,m to 240\,m, so the curve helps choose a bund height.}
-\label{fig:stage}
-\end{figure}
-
-% ------------------------------------------------------------------ 8
+% ------------------------------------------------------------------ 9
 \clearpage
 \section{Quality review: defects found and fixed}
 \label{sec:review}
@@ -598,9 +895,9 @@ The Phase~3 prototype (26 September 2026) was reviewed with probe scripts, live 
 \toprule
 \textbf{Area} & \textbf{Defect (measured)} & \textbf{Fix}\\
 \midrule
-Pond storage & Pond cells spread downstream and sideways outside the outlet's own catchment. That was 25--54\,\% of each footprint, and it inflated storage by 37--272\,\% (Figure~\ref{fig:inflation}). & Impoundment model restricted to $C(o)$; the embankment length comes from lower ground outside it.\\
+Pond storage & Pond cells spread downstream and sideways outside the outlet's own catchment. That was 25--54\,\% of each footprint, and it inflated storage by 37--272\,\% (Figure~\ref{fig:inflation}). & Impoundment model restricted to $C(o)$; the embankment length comes from lower ground outside it (Section~\ref{sec:worked}, Step~4).\\
 Ranking & Sites were the cells just below an arbitrary 98th-percentile ``channel'' cutoff. All three had 32--36\,ha catchments on the sample (cutoff 36.3\,ha), and storage never affected the rank. & 40 separated candidates ranked by collectable volume; an explicit small-pond catchment cap.\\
-Terraces & Linear interpolation of 20\,m contours left 22.5\,\% of cells flat. Two sites shared one drainage line, and their storage was footprint $\times$ stage. & Bounded Clough--Tocher surface (0.6\,\% flat) and catchment-diversity rule.\\
+Terraces & Linear interpolation of 20\,m contours left 22.5\,\% of cells flat. Two sites shared one drainage line, and their storage was footprint $\times$ stage. & Bounded Clough--Tocher surface (0.6\,\% flat, Figure~\ref{fig:interp}) and catchment-diversity rule.\\
 OSM screening & The prototype used the editing API against its policy, and a 14$\times$12\,km area returned ``unavailable''. It applied a 35\,m buffer to every footpath. & Overpass with three servers, partial answers rejected, buffers by road class. The same area now screens 249 water and 15,361 built features.\\
 Rainfall & A single month (August 2025) was treated as the planning rainfall. & Monsoon and annual CHIRPS totals fetched in parallel, with monthly bars.\\
 Speed & DEM, OSM and CHIRPS were fetched one after another: 12.9\,s for a Copernicus area. & Parallel fetches, a grid cache, AWS tiles: 6.3\,s cold, 0.3\,s repeat (Figure~\ref{fig:speed}).\\
@@ -617,7 +914,7 @@ Honesty & The sample was described as a campus survey, and the runoff presets ha
 \begin{subfigure}[t]{0.49\linewidth}
 \centering
 \begin{tikzpicture}
-\begin{axis}[ybar,width=\linewidth,height=58mm,bar width=9pt,ymin=0,ymax=60000,
+\begin{axis}[ybar,width=0.92\linewidth,height=58mm,bar width=9pt,ymin=0,ymax=60000,
   symbolic x coords={Site 1,Site 2,Site 3},xtick=data,enlarge x limits=0.25,
   ylabel={Storage (\mthree)},label style={font=\footnotesize},scaled y ticks=false,
   y tick label style={/pgf/number format/1000 sep={\mathord{,}},font=\scriptsize},x tick label style={font=\footnotesize},
@@ -633,7 +930,7 @@ Honesty & The sample was described as a campus survey, and the runoff presets ha
 \begin{subfigure}[t]{0.49\linewidth}
 \centering
 \begin{tikzpicture}
-\begin{axis}[xbar,width=\linewidth,height=58mm,bar width=7pt,xmin=0,xmax=120,
+\begin{axis}[xbar,width=0.68\linewidth,height=58mm,bar width=7pt,xmin=0,xmax=120,
   symbolic y coords={Server after DNS fix,Server before DNS fix,PC repeat cached,PC final build,PC prototype},
   ytick=data,y tick label style={font=\scriptsize},x tick label style={font=\scriptsize},
   xlabel={Seconds per analysis},label style={font=\footnotesize},nodes near coords,nodes near coords style={font=\scriptsize},
@@ -647,14 +944,28 @@ Honesty & The sample was described as a campus survey, and the runoff presets ha
 \caption{Two of the measured improvements.}
 \end{figure}
 
-% ------------------------------------------------------------------ 9
+\subsection*{Defects found in the new Google and theme work before release}
+\begin{tabularx}{\linewidth}{@{}L{34mm}YY@{}}
+\toprule
+\textbf{Feature} & \textbf{Defect (how it was found)} & \textbf{Fix}\\
+\midrule
+Google 3D Earth & Google's \code{Polygon3DElement} throws on an empty \code{innerCoordinates} list, and the uncaught error blanked the whole planner (browser test). & Holes are passed only when present; each overlay is added in its own guard, and an error boundary isolates every optional Google feature.\\
+Google Places & \code{crypto.randomUUID} exists only on HTTPS or localhost. On the plain-HTTP IIT address the fallback token made every search return HTTP 400 (live test). & Session tokens built from \code{crypto.getRandomValues}.\\
+Dark theme & The generator only read hex colours, so rules written as \code{white} stayed light (the 3D inspector header), and it brightened pale chart gridlines into bright lines (screenshot review). & Named colours are mapped too; pale strokes are treated as borders; chart series have validated dark steps.\\
+Browser tests & With satellite as the default basemap, tiles cancelled by zooming (\code{ERR\_ABORTED}) were counted as failures. & Cancelled requests are ignored; real failures still fail, and logged URLs drop their query strings, so the key is never printed.\\
+\bottomrule
+\end{tabularx}
+
+% ------------------------------------------------------------------ 10
+\Needspace{16\baselineskip}
 \section{Validation}
+\label{sec:validation}
 \subsection{Automated tests}
 \begin{tabularx}{\linewidth}{@{}L{36mm}rY@{}}
 \toprule
 \textbf{Suite} & \textbf{Tests} & \textbf{What is checked}\\
 \midrule
-\code{test\_api.py} & 4 & Phase 2 route: health, sample KML, KMZ, unsupported format\\
+\code{test\_api.py} & 6 & Phase 2 route: health, sample KML, KMZ, unsupported format; \code{/api/config} exposes a Google key only when one is configured; the \code{.env} loader never overrides real environment variables\\
 \code{test\_planning.py} & 6 & Geometries and the runoff formula; different land gives different sites; outside-area rejection; contour overlay; sites and ponds avoid mapped water and roads; OSM XML parsing\\
 \code{test\_hydrology.py} & 11 & Pond inside its own catchment; ranking by collectable volume; consistent stage curves; non-overlapping ponds; higher stage holds more; contours in the response; a synthetic valley; rainfall periods; Overpass parser and road classes; contour export round trip\\
 \code{test\_upload.py} & 8 & Uploaded KML/KMZ drives the analysis; absolute altitudes and ExtendedData; every shipped real KML uploads and analyzes; bounded smooth interpolation; distinct drainage lines\\
@@ -662,13 +973,15 @@ Honesty & The sample was described as a campus survey, and the runoff presets ha
 \bottomrule
 \end{tabularx}
 
-All 34 tests pass on the development PC and on the IIT server. Three Playwright browser suites drive a real Chrome, on desktop (1440$\times$900) and mobile (390$\times$844):
+All 36 tests pass on the development PC and on the IIT server. Five Playwright suites drive a real Chrome, on desktop (1440$\times$900) and mobile (390$\times$844):
 \begin{itemize}
 \item \code{smoke.mjs}: analyze, draw a second area and confirm the site changes;
 \item \code{smoke-upload-3d.mjs}: upload two contour maps, open the 3D model, orbit it, and change site and exaggeration;
-\item \code{walkthrough.mjs}: satellite and 3D terrain, source switching, an example area, the inspector with satellite drape, the globe, and search.
+\item \code{walkthrough.mjs}: satellite and 3D terrain, source switching, an example area, the inspector with satellite drape, the globe, and search;
+\item \code{google-check.mjs}: the Google tile session and viewport attribution, Places search and lookup, the Google drape with its credit, and the 3D Earth view with all ten overlays;
+\item \code{theme-review.mjs}: every main screen in both themes, including the phone layout and the Earth view, for visual review.
 \end{itemize}
-Setting \code{POND\_URL=http://10.1.75.53:3233/} runs them against the live deployment, where they pass with no page errors.
+Setting \code{POND\_URL=http://10.1.75.53:3233/} runs them against the live deployment, where they pass with no page errors. The worked example in Section~\ref{sec:worked} is itself a check: \code{report\_figures.py} asserts that its hand-derived bund edges give the same length as \code{impoundment()}.
 
 \subsection{Live verification}
 \begin{tabularx}{\linewidth}{@{}Yrr@{}}
@@ -682,18 +995,19 @@ KML upload (106 contour lines) / contour KML export & 200 & 0.1\,s\\
 Phase 2 \code{POST /analyzeContour} with the supplied KML & 200 & 2.9\,s\\
 New, uncached areas (AWS DEM, CHIRPS and Overpass fetched live) & 200 & 3--22\,s\\
 Cached example with \emph{all} network access blocked (proxy test) & 200 & 0.4\,s\\
+Google layers from the live page (\code{google-check.mjs}) & pass & no problems\\
 \bottomrule
 \end{tabularx}
 
-% ------------------------------------------------------------------ 10
+% ------------------------------------------------------------------ 11
 \section{Deployment on the IIT system}
 \label{sec:deploy}
-The application runs on the assigned container: SSH port 2233, so Application~1 is internal port 3000, published as external port 3233. It runs in tmux session \code{pond-app} under a loop script (\code{scripts/run\_server.sh}) that restarts Uvicorn if it exits and logs to \code{logs/app.log}. Figure~\ref{fig:docs} shows the live API documentation.
+The application runs on the assigned container: SSH port 2233, so Application~1 is internal port 3000, published as external port 3233. It runs in tmux session \code{pond-app} under a loop script (\code{scripts/\allowbreak run\_server.sh}) that restarts Uvicorn if it exits and logs to \code{logs/app.log}. The optional Google key is read from \path{~/ai-village-pond-planning/.env} (permissions 600, not in git). Front-end updates are deployed by replacing the built \code{frontend/dist} folder; the server needs no restart for them. Figure~\ref{fig:docs} shows the API documentation.
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=0.78\linewidth]{r12-docs.jpg}
-\caption{Swagger UI of the deployed API at \url{http://10.1.75.53:3233/docs}, listing the eight routes.}
+\caption{Swagger UI of the API (served at \url{http://10.1.75.53:3233/docs}), listing the eight routes.}
 \label{fig:docs}
 \end{figure}
 
@@ -707,53 +1021,66 @@ SFTP restricted & Files are streamed through the SSH channel and verified by SHA
 Windows line endings broke the start script & \code{.gitattributes} keeps \code{*.sh} as LF.\\
 Container DNS (1.1.1.1/8.8.8.8) drops lookups at random, about 20\,s per failure & Retries on every remote read; an in-process DNS cache that reuses the last good address when a lookup fails; data hosts resolved at start-up; AWS as the primary DEM host. A new area went from 69--103\,s with screening unavailable to 3--22\,s fully screened.\\
 Demo reliability & The 11 example areas are pre-cached (DEM, CHIRPS, OSM), so they need no outbound access.\\
-From campus Wi-Fi (10.50.x), about 50\,\% of new TCP connections to 10.1.75.53 fail (10/20 on port 3233, 11/20 on port 2233), while 20/20 succeed from inside the server network & This loss is outside the application. The front end retries API calls after network-level failures, and the test scripts retry the first page load. Refreshing helps if the first load fails; wired LAN is recommended for the demonstration.\\
+From campus Wi-Fi (10.50.x), about 50\,\% of new TCP connections to 10.1.75.53 fail (10/20 on port 3233, 11/20 on port 2233), while 20/20 succeed from inside the server network & This loss is outside the application. The front end retries API calls after network-level failures, and the test scripts retry the first page load. A dropped stylesheet or tile request can still leave a page half-drawn; refreshing fixes it, and wired LAN is recommended for the demonstration.\\
+The container restarted once during the work and took the tmux session with it; it has no init system (PID 1 is \code{sshd}) & The session was restarted by hand with the command in Appendix~\ref{app:run}; checking \code{/health} before a demonstration is part of the demo script.\\
 \bottomrule
 \end{tabularx}
 
-% ------------------------------------------------------------------ 11
+% ------------------------------------------------------------------ 12
 \section{Limitations and responsible use}
 \begin{itemize}
 \item \textbf{Elevation.} GLO-30 is a 30\,m \emph{surface} model, so trees and buildings raise it and it misses small channels and field bunds. Contour grids are interpolations. A catchment that reaches the grid edge is flagged as possibly underestimated.
 \item \textbf{Hydrology.} The runoff coefficient is a seasonal fraction, and CHIRPS pixels ($\approx$5\,km) are wider than a village. Collectable volume is one fill, not an annual yield. Seepage, evaporation (roughly 1.3--1.6\,m a year near Raipur), siltation and spillway design are not modelled.
 \item \textbf{Screening.} OpenStreetMap is incomplete in rural Chhattisgarh. Forest land, sanctuaries and protected areas are not screened. Land ownership and legal eligibility are unverified; every site is labelled \emph{unverified}.
 \item \textbf{Scale.} The pond radius cap keeps results at village-tank scale, so larger reservoirs are underestimated by design.
+\item \textbf{Google layers.} Google's imagery and 3D surface are for visual context and may differ in date and alignment from the elevation grid. They depend on the key's daily quota; when it is exhausted the planner falls back to the open layers.
 \item \textbf{Imagery licence.} EOxCloudless imagery is licensed for non-commercial use only.
 \end{itemize}
 Every candidate needs a field visit, a topographic survey, soil tests and land records before any construction decision.
 
-% ------------------------------------------------------------------ 12
-\clearpage
+% ------------------------------------------------------------------ 13
+\Needspace{24\baselineskip}
 \section{Disclosure of AI use}
 \label{sec:ai}
-Generative AI was used extensively in the final Phase~3 build. This section states what it was used for, what it was not used for, and how its output was checked.
+Generative AI was used extensively in the final Phase~3 build, for coding, debugging and documentation. This section states what it was used for, what it was not used for, and how its output was checked.
 
 \begin{tabularx}{\linewidth}{@{}L{30mm}Y@{}}
 \toprule
-\textbf{Tool} & \textbf{Claude Code (Anthropic), running the Claude Opus 5.5 model, used on 27--28 September 2026 on the development PC~[\ref{ref:claude}]. It ran two research sub-agents that used Firecrawl web search and scraping~[\ref{ref:firecrawl}].}\\
+\textbf{Tool} & \textbf{Claude Code (Anthropic), running the Claude Opus 5.5 model, used on 27--28 September 2026 on the development PC~[\ref{ref:claude}]. It ran research sub-agents that used Firecrawl web search and scraping~[\ref{ref:firecrawl}].}\\
 \midrule
-Code review and debugging & Reviewed the prototype for defects; wrote probe scripts that measured them (storage inflation, ranking clustering, failed OSM requests, the map rebuild, flat terraces); diagnosed deployment problems (restricted SFTP, CRLF endings, shell path conversion, missing Linux wheels, container DNS, campus packet loss).\\
-Coding & Wrote most of the final Phase~3 code and tests: the impoundment and ranking model, bounded smooth interpolation, the Overpass screening, rainfall periods, the retry and cache layer, the DNS cache, contour tracing and export; and the front end's search, examples, basemaps, 3D terrain and globe, results panel, charts, 3D inspector changes, exports and contrast fixes. Every commit from \code{af86e61} to \code{79c2694} carries a \code{Co-Authored-By: Claude} trailer.\\
-Research & Found and checked data sources, tile and API terms, the IIT Bhilai campus coordinates, the provenance of the supplied KML, example areas, and planning norms (Amrit Sarovar, MGNREGA, CGWB). Research claims were cross-checked by running the pipeline on each area and by reading the primary documents cited in the references.\\
-Documentation & Drafted the README, HANDOVER.md, code comments and this report, including its figures, tables and equations.\\
-Operations & Ran the tests, builds, browser suites, screenshot capture and deployment commands over SSH. It used credentials supplied by the team and asked for approval before destructive or public actions (cleaning the server, pushing to GitHub).\\
+Coding & Wrote most of the final Phase~3 code and tests:
+\begin{itemize}[leftmargin=*,itemsep=0pt,topsep=1pt]
+\item backend: the impoundment and ranking model, bounded smooth interpolation, the Overpass screening, rainfall periods, the retry, cache and DNS layers, contour tracing and export, and the \code{.env} key loading;
+\item front end: search, examples, basemaps, 3D terrain and globe, the results panel and charts, the 3D inspector changes, exports and the contrast fixes;
+\item the optional Google layers (tiles with attribution, 3D Earth view, Places);
+\item the dark-theme generator and its chart palette;
+\item this report's figure generator.
+\end{itemize}
+Every commit from \code{af86e61} onwards carries a \code{Co-Authored-By: Claude} trailer.\\
+Debugging & Reviewed the prototype for defects and wrote probe scripts that measured them (storage inflation, ranking clustering, failed OSM requests, the map rebuild, flat terraces). Found the Google-layer and theme defects in Section~\ref{sec:review} through browser tests and screenshot review. Diagnosed deployment problems: restricted SFTP, CRLF endings, shell path conversion, missing Linux wheels, container DNS, campus packet loss and the container restart.\\
+Research & Found and checked data sources, tile and API terms (including Google's attribution and no-caching rules), the IIT Bhilai campus coordinates, the provenance of the supplied KML, example areas, and planning norms (Amrit Sarovar, MGNREGA, CGWB). Research claims were cross-checked by running the pipeline on each area and by reading the primary documents cited in the references.\\
+Documentation & Drafted the README, HANDOVER.md, code comments and this report, including its tables, equations and diagrams. The worked-example figures are drawn by a script from values the planner's code computes; none were drawn by hand or by an image model.\\
+Operations & Ran the tests, builds, browser suites, screenshot capture and deployment commands over SSH. It used credentials and the Google key supplied by the team. It asked for approval before destructive or public actions (cleaning the server, pushing to GitHub), and kept the key out of every commit.\\
 \bottomrule
 \end{tabularx}
 
 \begin{itemize}
 \item \textbf{Not used for results.} The planner makes no calls to a language model. Every number in the application and in this report comes from deterministic code run on the cited data, or from measured test runs.
-\item \textbf{No generated images.} Every figure in this report is a screenshot of the running system or a chart or diagram drawn from measured values. The conceptual images in \code{output/imagegen/} come from earlier phases and are not used here as evidence.
-\item \textbf{Human responsibility.} The team set the goals and constraints, made the decisions (what to fix, what to clean up, when to deploy and publish), provided access, and reviewed the results. The team remains responsible for the submission.
+\item \textbf{No generated images.} Every figure is either a screenshot of the running system or a chart or diagram drawn from computed or measured values. The conceptual images in \code{output/imagegen/} come from earlier phases and are not used here as evidence.
+\item \textbf{Human responsibility.} The team set the goals and constraints and made the decisions: what to fix, what to clean up, which Google features to use, when to deploy and publish. It provided access and reviewed the results, and remains responsible for the submission.
 \item \textbf{AI errors that were caught.} Checking the AI's output changed it in several places:
   \begin{itemize}
   \item the sample was first described as the IIT Bhilai campus, and was corrected after the location was verified;
   \item the first runoff presets had no source and were replaced by the CGWB ranges;
   \item a first cubic interpolation overshot the survey by 20\,m and was bounded;
-  \item a flat-terrace artefact was found by inspecting a live screenshot and was fixed before this report.
+  \item a flat-terrace artefact was found by inspecting a live screenshot and was fixed;
+  \item the first Google 3D Earth version crashed the whole page, and Places search failed on the HTTP address (Section~\ref{sec:review});
+  \item the AI once reported temporary probe files as deleted before they were; this was noticed and corrected;
+  \item in this report, a first draft of the Kanker storage read 53,624\,\mthree{} (half-to-even rounding of 53,624.5) against the planner's 53,625; the figure script now rounds halves up, as the interface does.
   \end{itemize}
 \end{itemize}
 
-% ------------------------------------------------------------------ 13
+% ------------------------------------------------------------------ 14
 \Needspace{10\baselineskip}
 \section{Future work}
 \begin{itemize}
@@ -761,6 +1088,7 @@ Operations & Ran the tests, builds, browser suites, screenshot capture and deplo
 \item A bare-earth DEM (FABDEM or CartoDEM), and on-site drone or DGPS surveys, for design-grade storage.
 \item Monthly water-balance simulation with evaporation, seepage and demand, with a spillway check for large catchments.
 \item Land-cover-weighted runoff from ESA WorldCover instead of one coefficient.
+\item Restricting the Google key to the planner's address in the Google Cloud console, and a service manager on the container so the planner restarts by itself.
 \item Durable, per-user storage of uploads (currently in memory for two hours) and a stable public mirror.
 \end{itemize}
 
@@ -773,12 +1101,18 @@ Operations & Ran the tests, builds, browser suites, screenshot capture and deplo
 \item\label{ref:chirps} CHIRPS v3: \url{https://www.chc.ucsb.edu/data/chirps3}, doi:\href{https://doi.org/10.15780/G2JQ0P}{10.15780/G2JQ0P}
 \item\label{ref:overpass} Overpass API: \url{https://wiki.openstreetmap.org/wiki/Overpass_API}; OSM licence: \url{https://www.openstreetmap.org/copyright}
 \item\label{ref:eox} EOxCloudless: \url{https://cloudless.eox.at}; OpenTopoMap: \url{https://opentopomap.org/about}; AWS Terrain Tiles: \url{https://registry.opendata.aws/terrain-tiles/}; Photon: \url{https://photon.komoot.io}
+\item\label{ref:google} Google Map Tiles API policies: \url{https://developers.google.com/maps/documentation/tile/policies}; Photorealistic 3D Maps in the Maps JavaScript API: \url{https://developers.google.com/maps/documentation/javascript/3d-maps-overview}; Places API (New): \url{https://developers.google.com/maps/documentation/places/web-service/op-overview}
+\item\label{ref:geoguide} Google Maps, Google Earth and Street View guidelines (use in documents and screenshots): \url{https://www.google.com/permissions/geoguidelines/}
 \item\label{ref:amrit} Mission Amrit Sarovar, Phase-2 guidelines (MoRD, 2024): \url{https://amritsarovar.gov.in/AmrutSarovarDocuments/AmritSarovarGuidelinesPhase2.pdf}
 \item\label{ref:mgnrega} MGNREGA suggestive estimates for farm ponds (MoRD circular, 2016): \url{https://nregaplus.nic.in/netnrega/writereaddata/Circulars/1569SuggestiveEstimatesFarmPondNADEPandVermiCompost.pdf}
 \item\label{ref:cgwb} CGWB, Manual on Artificial Recharge of Ground Water: \url{https://cgwb.gov.in/cgwbpnm/public/uploads/documents/1679997242339591060file.pdf}
+\item\label{ref:barnes} R. Barnes, C. Lehman, D. Mulla, ``Priority-flood: An optimal depression-filling and watershed-labeling algorithm for digital elevation models'', \emph{Computers \& Geosciences} 62 (2014) 117--127.
+\item\label{ref:d8} J.~F. O'Callaghan, D.~M. Mark, ``The extraction of drainage networks from digital elevation data'', \emph{Computer Vision, Graphics, and Image Processing} 28 (1984) 323--344.
+\item\label{ref:ct} SciPy \code{CloughTocher2DInterpolator} and \code{griddata}: \url{https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.CloughTocher2DInterpolator.html}
+\item\label{ref:oklab} B. Ottosson, ``A perceptual color space for image processing'' (OKLab): \url{https://bottosson.github.io/posts/oklab/}
 \item\label{ref:cmg} Contour Map Generator: \url{https://map.contourmapgenerator.com}
 \item\label{ref:soi} Survey of India Online Maps Portal: \url{https://onlinemaps.surveyofindia.gov.in}; Bhuvan: \url{https://bhuvan-app3.nrsc.gov.in/data/download/index.php}; FABDEM: \url{https://data.bris.ac.uk/data/dataset/s5hqmjcdj8yo2ibzi9b4ew3sn}; OpenTopography API: \url{https://portal.opentopography.org/apidocs/}
-\item\label{ref:libs} MapLibre GL JS: \url{https://maplibre.org}; Terra Draw: \url{https://github.com/JamesLMilner/terra-draw}; Three.js: \url{https://threejs.org}; FastAPI: \url{https://fastapi.tiangolo.com}; contourpy: \url{https://contourpy.readthedocs.io}; rasterio: \url{https://rasterio.readthedocs.io}
+\item\label{ref:libs} MapLibre GL JS: \url{https://maplibre.org}; Terra Draw: \url{https://github.com/JamesLMilner/terra-draw}; Three.js: \url{https://threejs.org}; FastAPI: \url{https://fastapi.tiangolo.com}; contourpy: \url{https://contourpy.readthedocs.io}; rasterio: \url{https://rasterio.readthedocs.io}; Lucide icons: \url{https://lucide.dev}
 \item\label{ref:claude} Claude Code: \url{https://claude.com/claude-code}
 \item\label{ref:firecrawl} Firecrawl: \url{https://www.firecrawl.dev}
 \end{enumerate}
@@ -795,7 +1129,7 @@ Operations & Ran the tests, builds, browser suites, screenshot capture and deplo
 \code{POST /api/terrain-upload} & Multipart \code{contour\_map} (KML/KMZ, $\leq$20\,MB) $\rightarrow$ temporary \code{dataset\_id}, bounds, elevation range\\
 \code{GET /api/terrain/\{id\}/contours} & Uploaded linework as GeoJSON\\
 \code{POST /api/export/contours.kml} & Contour KML for \code{area} from the chosen source (optional \code{interval\_m})\\
-\code{GET /api/config}, \code{/api/sample-contours} & Sample extent, defaults, example areas; supplied contours\\
+\code{GET /api/config}, \code{/api/sample-contours} & Sample extent, defaults, example areas and the optional \code{google\_maps\_key}; supplied contours\\
 \code{POST /analyzeContour}, \code{/findCatchment} & Phase 2 route (multipart \code{contour\_map})\\
 \code{GET /health}, \code{/docs} & Status; Swagger UI\\
 \bottomrule
@@ -818,17 +1152,27 @@ curl -X POST http://10.1.75.53:3233/api/analyze-area -H "Content-Type: applicati
 \end{lstlisting}
 
 % ------------------------------------------------------------------ B
-\Needspace{26\baselineskip}
+\Needspace{30\baselineskip}
 \section{Reproduce and run}
+\label{app:run}
 \begin{lstlisting}
 # Development (Windows PowerShell)
 py -3 -m venv .venv; .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 cd frontend; npm ci; npm run build; cd ..
-.\.venv\Scripts\python.exe -m pytest -q          # 34 tests
+.\.venv\Scripts\python.exe -m pytest -q          # 36 tests
 .\.venv\Scripts\python.exe run.py                # http://127.0.0.1:8000/
 cd frontend; node scripts\smoke.mjs; node scripts\smoke-upload-3d.mjs; node scripts\walkthrough.mjs
+node scripts\google-check.mjs; node scripts\theme-review.mjs
 python scripts/prewarm_cache.py                  # fill cache/ for the example areas
 python scripts/create_copernicus_contour_demo.py # regenerate contour-maps/real/*.kml
+python scripts/build_dark_theme.py               # regenerate frontend/src/dark.css
+
+# Optional Google layers: a git-ignored .env file in the repository root
+GOOGLE_MAPS_API_KEY=<browser key>
+
+# This report
+node frontend/scripts/report-shots.mjs; python scripts/report_images.py; python scripts/report_figures.py
+pdflatex -interaction=nonstopmode -output-directory tmp/latex-build latex/phase3_report.tex   # twice
 
 # IIT container (see README "Remote deployment with tmux")
 python3 -m venv --without-pip .venv
@@ -838,22 +1182,22 @@ tmux new-session -d -s pond-app "bash ~/ai-village-pond-planning/scripts/run_ser
 \end{lstlisting}
 
 % ------------------------------------------------------------------ C
-\Needspace{14\baselineskip}
+\Needspace{16\baselineskip}
 \section{Demonstration script}
 \label{app:demo}
-A walkthrough of under five minutes, in the order the browser test follows:
+A walkthrough of about five minutes, in the order the browser tests follow:
 \begin{enumerate}
-\item Open \url{http://10.1.75.53:3233/} and run the supplied contours; explain the three sites, catchments and warnings.
+\item Check \url{http://10.1.75.53:3233/health}, then open the planner. Run the supplied contours and explain the three sites, catchments and warnings (Figure~\ref{fig:annotated}).
 \item Open \emph{Example areas} and choose \emph{Maikal ridge front}; analyze.
-\item Switch to Satellite and 3D, tilt the map, then zoom out on the globe.
+\item Switch to 3D over satellite, then open \emph{Google 3D Earth} and step through the three sites.
 \item Compare the sites in the table; read the stage--storage chart and the benchmarks.
 \item Open \emph{Inspect 3D model} and turn on the satellite drape.
 \item Upload \code{contour-maps/real/kanker-west\_glo30.kml} and analyze; export the Google Earth KML.
-\item Close with the limitations: these are screening estimates that need a field survey.
+\item Toggle the light theme once, then close with the limitations: these are screening estimates that need a field survey.
 \end{enumerate}
 
 % ------------------------------------------------------------------ D
-\Needspace{14\baselineskip}
+\Needspace{16\baselineskip}
 \section{Repository map}
 \begin{tabularx}{\linewidth}{@{}L{58mm}Y@{}}
 \toprule
@@ -862,11 +1206,12 @@ A walkthrough of under five minutes, in the order the browser test follows:
 \code{app/planning.py}, \code{hydrology.py} & Area validation, grid sources, ranking; upstream index, impoundment, stage table\\
 \code{app/terrain.py}, \code{contours.py} & KML/KMZ parsing and interpolation (Phase 2 algorithm); contour tracing and KML export\\
 \code{app/osm.py}, \code{rainfall.py}, \code{cache.py} & Overpass screening; CHIRPS periods; retries, disk cache, DNS cache\\
-\code{app/main.py}, \code{examples.py}, \code{upload\_store.py} & Routes and models; curated examples; temporary uploads\\
-\code{frontend/src/} & React app: \code{App}, \code{MapCanvas}, \code{ResultsPanel}, \code{StageChart}, \code{PlaceSearch}, \code{TerrainInspector}, \code{exporters}, \code{api}\\
+\code{app/main.py}, \code{settings.py}, \code{examples.py}, \code{upload\_store.py} & Routes and models; \code{.env} and Google key; curated examples; temporary uploads\\
+\code{frontend/src/} & React app: \code{App}, \code{MapCanvas}, \code{ResultsPanel}, \code{StageChart}, \code{PlaceSearch}, \code{TerrainInspector}, \code{GoogleEarthView}, \code{google}, \code{exporters}, \code{api}; \code{styles.css}, \code{planner.css}, generated \code{dark.css}, \code{dark-extra.css}\\
 \code{contour-maps/}, \code{contour-maps/real/} & Supplied KML, the original GLO-30 fixture, 10 example contour KMLs\\
-\code{tests/}, \code{frontend/scripts/} & 34 pytest tests; browser suites and the report screenshot script\\
-\code{scripts/} & Contour generation, cache pre-warm, server start script\\
+\code{tests/}, \code{frontend/scripts/} & 36 pytest tests; browser suites, the Google check, the theme review and the report screenshot script\\
+\code{scripts/} & Contour generation, cache pre-warm, server start script, dark-theme generator, report figure and image scripts\\
+\code{latex/}, \code{latex/generated/} & This report; its generated worked-example figures and numbers\\
 \code{README.md}, \code{HANDOVER.md} & Operating, deployment and handover documentation\\
 \bottomrule
 \end{tabularx}

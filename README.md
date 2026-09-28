@@ -400,13 +400,26 @@ This formula requires rainfall in metres and a locally justified runoff coeffici
 
 ## Build the Phase 3 report
 
-`output/pdf/AI_Village_Pond_Planning_Phase_3_Report.pdf` (24 pages) is built
-from `latex/phase3_report.tex` with the figures in `latex/figures/`
-(JPEG copies of screenshots taken from the live deployment by
-`POND_URL=http://10.1.75.53:3233/ node frontend/scripts/report-shots.mjs`).
-It uses only standard packages, so it also compiles on Overleaf.
+`output/pdf/AI_Village_Pond_Planning_Phase_3_Report.pdf` (37 pages) is built
+from `latex/phase3_report.tex` with:
+
+- `latex/figures/`: JPEG screenshots. Capture them with
+  `node frontend/scripts/report-shots.mjs`, which uses a local server by
+  default (set `POND_URL` for another). Then convert, trim and split them
+  with `python scripts/report_images.py`.
+- `latex/generated/`: the worked volume example in Section 6. Its TikZ
+  figures and number macros come from
+  `python scripts/report_figures.py`, which runs the planner's own
+  hydrology functions on a 7 × 7 synthetic valley and reads the Kanker west
+  result from a running planner.
+
+It uses only standard packages, so it also compiles on Overleaf; upload
+`latex/generated/` with the source.
 
 ```powershell
+node frontend\scripts\report-shots.mjs
+.\.venv\Scripts\python.exe scripts\report_images.py
+.\.venv\Scripts\python.exe scripts\report_figures.py
 New-Item -ItemType Directory -Force tmp\latex-build | Out-Null
 pdflatex -interaction=nonstopmode -output-directory tmp\latex-build latex\phase3_report.tex
 pdflatex -interaction=nonstopmode -output-directory tmp\latex-build latex\phase3_report.tex

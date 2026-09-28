@@ -53,11 +53,22 @@ const exampleButton = (page, name) => page.getByRole('button', { name })
   await results(page)
   await page.waitForTimeout(3000)
   await page.locator('.map-notice button').click().catch(() => {})
+  await page.getByRole('button', { name: 'Topo', exact: true }).click()
+  await page.waitForTimeout(3500)
   await shot(page, 'r04-example-topo')
   await page.getByRole('button', { name: 'Satellite', exact: true }).click()
   await page.getByRole('button', { name: '3D', exact: true }).click()
-  await page.waitForTimeout(6000)
+  await page.waitForTimeout(7000)
   await shot(page, 'r05-3d-satellite')
+  // Google Photorealistic 3D view with the planner's overlays (needs the Maps key).
+  const earth = page.getByRole('button', { name: /Google 3D Earth/ })
+  if (await earth.count()) {
+    await earth.first().click()
+    await page.waitForTimeout(14000)
+    await shot(page, 'r15-google-earth')
+    await page.keyboard.press('Escape')
+    await page.waitForTimeout(800)
+  }
   await page.getByRole('button', { name: '3D', exact: true }).click()
   await page.locator('.maplibregl-ctrl-globe').click()
   const box = await page.locator('.map-canvas').boundingBox()
@@ -108,6 +119,24 @@ const exampleButton = (page, name) => page.getByRole('button', { name })
   await results(page)
   await page.waitForTimeout(2500)
   await shot(page, 'r10-mobile', { fullPage: true })
+  await context.close()
+}
+
+// The light theme, for comparison with the dark default.
+{
+  const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1.5 })
+  await context.addInitScript(() => localStorage.setItem('pond-theme', 'light'))
+  const page = await context.newPage()
+  page.on('pageerror', (error) => problems.push(`pageerror: ${error.message}`))
+  for (let attempt = 1; ; attempt++) {
+    try { await page.goto(BASE_URL, { waitUntil: 'domcontentloaded', timeout: 60000 }); break }
+    catch (error) { if (attempt === 5) throw error; await page.waitForTimeout(2000) }
+  }
+  await page.locator('.map-canvas[data-ready="true"]').waitFor({ timeout: 60000 })
+  await page.locator('.analyze-button').click()
+  await results(page)
+  await page.waitForTimeout(3000)
+  await shot(page, 'r16-light-theme')
   await context.close()
 }
 

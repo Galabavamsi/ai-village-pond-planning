@@ -1,0 +1,23 @@
+\addplot3[surf,shader=faceted,faceted color=terrainhi!70!black,colormap name=terrain,mesh/rows=7,mesh/cols=7,line width=0.3pt] coordinates {
+(10,130,106.50) (30,130,105.10) (50,130,104.00) (70,130,103.50) (90,130,104.00) (110,130,104.90) (130,130,106.50)
+(10,110,106.10) (30,110,104.40) (50,110,103.40) (70,110,103.10) (90,110,103.50) (110,110,104.50) (130,110,105.80)
+(10,90,105.30) (30,90,103.90) (50,90,102.70) (70,90,100.90) (90,90,102.60) (110,90,103.70) (130,90,105.10)
+(10,70,104.70) (30,70,103.10) (50,70,102.30) (70,70,101.80) (90,70,102.20) (110,70,103.00) (130,70,104.60)
+(10,50,104.10) (30,50,102.70) (50,50,101.50) (70,50,101.10) (90,50,101.50) (110,50,102.60) (130,50,104.20)
+(10,30,103.40) (30,30,102.10) (50,30,101.20) (70,30,100.50) (90,30,101.00) (110,30,102.10) (130,30,103.50)
+(10,10,102.80) (30,10,101.50) (50,10,100.60) (70,10,99.80) (90,10,100.60) (110,10,101.50) (130,10,102.80)
+};
+\fill[storage,fill opacity=0.55] (axis cs:60,80,102.50) -- (axis cs:80,80,102.50) -- (axis cs:80,100,102.50) -- (axis cs:60,100,102.50) -- cycle;
+\fill[storage,fill opacity=0.55] (axis cs:40,60,102.50) -- (axis cs:60,60,102.50) -- (axis cs:60,80,102.50) -- (axis cs:40,80,102.50) -- cycle;
+\fill[storage,fill opacity=0.55] (axis cs:60,60,102.50) -- (axis cs:80,60,102.50) -- (axis cs:80,80,102.50) -- (axis cs:60,80,102.50) -- cycle;
+\fill[storage,fill opacity=0.55] (axis cs:80,60,102.50) -- (axis cs:100,60,102.50) -- (axis cs:100,80,102.50) -- (axis cs:80,80,102.50) -- cycle;
+\fill[storage,fill opacity=0.55] (axis cs:40,40,102.50) -- (axis cs:60,40,102.50) -- (axis cs:60,60,102.50) -- (axis cs:40,60,102.50) -- cycle;
+\fill[storage,fill opacity=0.55] (axis cs:60,40,102.50) -- (axis cs:80,40,102.50) -- (axis cs:80,60,102.50) -- (axis cs:60,60,102.50) -- cycle;
+\fill[storage,fill opacity=0.55] (axis cs:80,40,102.50) -- (axis cs:100,40,102.50) -- (axis cs:100,60,102.50) -- (axis cs:80,60,102.50) -- cycle;
+\fill[storage,fill opacity=0.55] (axis cs:60,20,102.50) -- (axis cs:80,20,102.50) -- (axis cs:80,40,102.50) -- (axis cs:60,40,102.50) -- cycle;
+\draw[collect,line width=2pt] (axis cs:40,40,102.65) -- (axis cs:60,40,102.65);
+\draw[collect,line width=2pt] (axis cs:80,40,102.65) -- (axis cs:100,40,102.65);
+\draw[collect,line width=2pt] (axis cs:60,20,102.65) -- (axis cs:80,20,102.65);
+\draw[collect,line width=2pt] (axis cs:60,40,102.65) -- (axis cs:60,20,102.65);
+\draw[collect,line width=2pt] (axis cs:80,40,102.65) -- (axis cs:80,20,102.65);
+\draw[collect,thick] (axis cs:70,30,100.50) -- (axis cs:70,30,104.10) node[above,font=\tiny,text=collect!80!black] {outlet $o$};
