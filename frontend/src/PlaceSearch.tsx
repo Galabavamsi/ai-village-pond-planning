@@ -54,7 +54,10 @@ async function photonSuggestions(query: string, signal: AbortSignal): Promise<Su
   return suggestions;
 }
 
-const newSessionToken = () => (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`);
+// crypto.randomUUID only exists in secure contexts (HTTPS or localhost); the IIT
+// URL is plain HTTP, so build a URL-safe token from getRandomValues instead.
+const newSessionToken = () =>
+  Array.from(crypto.getRandomValues(new Uint8Array(16)), (byte) => byte.toString(16).padStart(2, "0")).join("");
 
 /** Place search: Google Places when a key is configured, Photon (OSM) otherwise or on failure. */
 export default function PlaceSearch({ onPick, googleKey = null }: { onPick: (place: Place) => void; googleKey?: string | null }) {
