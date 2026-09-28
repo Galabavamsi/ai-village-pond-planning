@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Loader2, MapPin, Search, X } from "lucide-react";
-import { GOOGLE_LOGO_ON_WHITE, placeLocation, placeSuggestions } from "./google";
+import { GOOGLE_LOGO_ON_DARK, GOOGLE_LOGO_ON_WHITE, placeLocation, placeSuggestions } from "./google";
 
 export interface Place {
   label: string;
@@ -162,7 +162,7 @@ export default function PlaceSearch({ onPick, googleKey = null }: { onPick: (pla
           {error ? <li className="place-results-note">{error}</li> : null}
           <li className="place-results-note place-results-credit">
             {provider === "google"
-              ? <><img src={GOOGLE_LOGO_ON_WHITE} alt="Google Maps" height={16} /> <span>Place results</span></>
+              ? <><img className="logo-for-light" src={GOOGLE_LOGO_ON_WHITE} alt="Google Maps" height={16} /><img className="logo-for-dark" src={GOOGLE_LOGO_ON_DARK} alt="Google Maps" height={16} /> <span>Place results</span></>
               : "Search © OpenStreetMap contributors · Photon"}
           </li>
         </ul>

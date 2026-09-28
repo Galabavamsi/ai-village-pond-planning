@@ -15,6 +15,7 @@ import {
   MapPinned,
   Menu,
   Mountain,
+  Moon,
   MousePointer2,
   Pentagon,
   RotateCcw,
@@ -23,6 +24,7 @@ import {
   SlidersHorizontal,
   Sparkles,
   Spline,
+  Sun,
   UploadCloud,
   X,
 } from "lucide-react";
@@ -147,7 +149,9 @@ export default function App() {
   const [coefficient, setCoefficient] = useState(0.35);
   const [stage, setStage] = useState(2.5);
   const [maxCatchment, setMaxCatchment] = useState(100);
-  const [basemap, setBasemap] = useState<Basemap>("topo");
+  const [theme, setTheme] = useState<"dark" | "light">(() => (document.documentElement.dataset.theme === "light" ? "light" : "dark"));
+  // Imagery suits the dark interface; the topographic map suits the light one.
+  const [basemap, setBasemap] = useState<Basemap>(() => (document.documentElement.dataset.theme === "light" ? "topo" : "satellite"));
   const [terrain3d, setTerrain3d] = useState(false);
   const [exaggeration, setExaggeration] = useState(2);
   const [showContours, setShowContours] = useState(true);
@@ -166,6 +170,12 @@ export default function App() {
   const focusKey = useRef(0);
 
   const flyTo = (bounds: Bounds) => setFocus({ bounds, key: ++focusKey.current });
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    localStorage.setItem("pond-theme", theme);
+    document.querySelector('meta[name="theme-color"]')?.setAttribute("content", theme === "dark" ? "#151d1f" : "#f7f8f6");
+  }, [theme]);
 
   useEffect(() => {
     apiFetch("/api/config")
@@ -357,6 +367,10 @@ export default function App() {
           <button className="header-link" onClick={() => setHelpOpen(true)}><CircleHelp size={17} /> How it works</button>
           <a className="header-link" href="/docs" target="_blank" rel="noreferrer"><ExternalLink size={16} /> API docs</a>
           <span className="local-badge" title="Where this planner is served from"><span className="live-dot" /> {hostLabel()}</span>
+          <button type="button" className="theme-toggle" aria-label={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
+            title={theme === "dark" ? "Light theme" : "Dark theme"} onClick={() => setTheme((value) => (value === "dark" ? "light" : "dark"))}>
+            {theme === "dark" ? <Sun size={17} /> : <Moon size={17} />}
+          </button>
         </nav>
         <button className="mobile-menu" aria-label="Open study area controls" onClick={() => setControlsOpen(true)}><Menu size={22} /></button>
       </header>
@@ -566,6 +580,7 @@ export default function App() {
               onSiteClick={setActiveSiteId}
               googleKey={googleKey}
               googleTiles={googleTiles}
+              theme={theme}
             />
           ) : (
             <div className="map-loading">{configError ?? "Loading the study area…"}</div>

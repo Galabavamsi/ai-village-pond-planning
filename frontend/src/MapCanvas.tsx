@@ -33,6 +33,7 @@ interface Props {
   /** Browser key and Map Tiles session; when set, "Satellite" uses Google imagery. */
   googleKey: string | null;
   googleTiles: GoogleTiles | null;
+  theme: "dark" | "light";
 }
 
 const empty: FeatureCollection = { type: "FeatureCollection", features: [] };
@@ -94,6 +95,7 @@ export default function MapCanvas({
   onSiteClick,
   googleKey,
   googleTiles,
+  theme,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
@@ -294,12 +296,20 @@ export default function MapCanvas({
     const style = basemapById(basemap);
     for (const id of ["contours-survey", "contours-dem"]) {
       map.setPaintProperty(`${id}-lines`, "line-color", style.contour);
+      // Imagery is busy already; minor contours recede so the index lines read.
+      map.setPaintProperty(`${id}-lines`, "line-opacity", ["case", ["get", "major"], 0.8, basemap === "satellite" ? 0.2 : 0.38]);
       map.setPaintProperty(`${id}-labels`, "text-color", basemap === "satellite" ? "#ffe8b0" : "#6b4220");
       map.setPaintProperty(`${id}-labels`, "text-halo-color", style.contourLabelHalo);
     }
     map.setPaintProperty("selection-border", "line-color", style.outline);
     map.setPaintProperty("selection-casing", "line-color", basemap === "satellite" ? "#0b2530" : "#ffffff");
   }, [ready, basemap, googleActive]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    // The background shows before tiles arrive and outside their coverage.
+    if (ready && map) map.setPaintProperty("background", "background-color", theme === "dark" ? "#16201f" : "#e9eee9");
+  }, [ready, theme]);
 
   // Google requires the data attribution for the tiles actually in view.
   useEffect(() => {

@@ -19,7 +19,8 @@ async function runViewport(name, viewport) {
   const errors = []
   const tileResponses = []
   page.on('pageerror', (error) => errors.push(error.message))
-  page.on('requestfailed', (request) => errors.push(`${request.url()}: ${request.failure()?.errorText}`))
+  // Tiles cancelled by a zoom or pan are aborted on purpose; only real failures count.
+  page.on('requestfailed', (request) => { const reason = request.failure()?.errorText ?? ''; if (!reason.includes('ERR_ABORTED')) errors.push(`${request.url().split('?')[0]}: ${reason}`) })
   page.on('response', (response) => {
     if (response.url().includes('opentopomap')) tileResponses.push(response.status())
   })

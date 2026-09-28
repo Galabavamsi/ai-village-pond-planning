@@ -1,0 +1,90 @@
+/* Hand-tuned dark-theme rules that the generated dark.css cannot infer. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+}
+:root[data-theme="dark"] body {
+  background: #151d1f;
+}
+
+/* MapLibre's own controls (their stylesheet assumes a light page). */
+:root[data-theme="dark"] .maplibregl-ctrl-group {
+  background: #1f2a2d !important;
+  border-color: #33464b !important;
+}
+:root[data-theme="dark"] .maplibregl-ctrl-group button + button {
+  border-top-color: #33464b;
+}
+:root[data-theme="dark"] .maplibregl-ctrl-group button:not(:disabled):hover {
+  background-color: #2a3a3e;
+}
+:root[data-theme="dark"] .maplibregl-ctrl button .maplibregl-ctrl-icon {
+  filter: invert(0.9);
+}
+:root[data-theme="dark"] .maplibregl-ctrl-attrib,
+:root[data-theme="dark"] .maplibregl-ctrl-attrib.maplibregl-compact {
+  background: #16211fe8 !important;
+  color: #c9d5d8;
+}
+:root[data-theme="dark"] .maplibregl-ctrl-attrib a {
+  color: #8fd8da;
+}
+:root[data-theme="dark"] .maplibregl-ctrl-attrib-button {
+  filter: invert(1);
+}
+
+/* Form controls inherit dark colours; ranges keep the brand accent. */
+:root[data-theme="dark"] input[type="range"] {
+  accent-color: #2bb7b0;
+}
+:root[data-theme="dark"] select option {
+  background: #1a2223;
+  color: #d9dee6;
+}
+
+/* The chart hover card and the 3D model use surfaces that need more lift. */
+:root[data-theme="dark"] .chart-tooltip {
+  background: #223034;
+  border-color: #3a4e53;
+}
+:root[data-theme="dark"] .terrain-viewport {
+  background: #0f1a1d;
+}
+
+/* Official Google Maps logo variants: white on dark surfaces, grey on light. */
+.logo-for-dark { display: none; }
+:root[data-theme="dark"] .logo-for-light { display: none; }
+:root[data-theme="dark"] .logo-for-dark { display: inline; }
+
+.theme-toggle {
+  display: inline-grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid #dae5e3;
+  background: #fff;
+  color: #3f565e;
+}
+:root[data-theme="dark"] .theme-toggle {
+  border-color: #33464b;
+  background: #1f2a2d;
+  color: #d9dee6;
+}
+
+/* Chart series on the dark surface: storage blue, runoff teal, collectable orange.
+   Validated with the dataviz palette checks (dark band, CVD and normal-vision
+   separation, 3:1 against #1a2223). */
+:root[data-theme="dark"] .chart-line,
+:root[data-theme="dark"] .chart-selected-rule { stroke: #5a8cf0; }
+:root[data-theme="dark"] .chart-area,
+:root[data-theme="dark"] .chart-marker { fill: #5a8cf0; }
+:root[data-theme="dark"] .chart-marker { stroke: #1a2223; }
+:root[data-theme="dark"] .chart-marker--hover { fill: #8db0f5; }
+:root[data-theme="dark"] .line-key--storage { border-color: #5a8cf0; }
+:root[data-theme="dark"] .chart-threshold { stroke: #1fa68f; }
+:root[data-theme="dark"] .line-key--runoff { border-color: #1fa68f; }
+:root[data-theme="dark"] .chart-offscale { fill: #7fd1c0; }
+:root[data-theme="dark"] .rain-bar i,
+:root[data-theme="dark"] .bar-fill--blue { background: #5a8cf0; }
+:root[data-theme="dark"] .bar-fill--teal { background: #1fa68f; }
+:root[data-theme="dark"] .bar-fill--orange { background: #cf7a35; }

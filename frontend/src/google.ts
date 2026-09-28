@@ -9,9 +9,11 @@
  */
 import logoOutline from "./assets/google-maps-logo-outline.svg";
 import logoGray from "./assets/google-maps-logo-gray.svg";
+import logoWhite from "./assets/google-maps-logo-white.svg";
 
 export const GOOGLE_LOGO_ON_IMAGERY = logoOutline;
 export const GOOGLE_LOGO_ON_WHITE = logoGray;
+export const GOOGLE_LOGO_ON_DARK = logoWhite;
 
 export interface GoogleTiles {
   url: string;

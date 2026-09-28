@@ -73,6 +73,18 @@ the supplied and independent contour files, open and orbit the 3D mesh, change
 sites and vertical exaggeration, and check for browser errors.
 `node scripts\walkthrough.mjs` captures a tour of the newer features
 (satellite, 3D terrain, example area, satellite drape, search) in `tmp/shots/`.
+`node scripts\theme-review.mjs` screenshots the main screens in both themes
+(`tmp/theme-review/`).
+
+**Themes and icons.** The interface opens in a dark theme with the satellite
+basemap; the sun/moon button in the header switches to the light theme (with
+the topographic basemap) and the choice is kept in `localStorage`. The dark
+colours in `frontend/src/dark.css` are generated from the light stylesheets by
+`python scripts/build_dark_theme.py` (OKLCH role mapping: surfaces, text,
+borders, marks, shadows); rerun it after editing `styles.css` or
+`planner.css`. Hand-tuned rules, including the chart series colours checked
+for colour-blind separation on the dark surface, live in `dark-extra.css`.
+Icons are the open-source [Lucide](https://lucide.dev) set (ISC licence).
 
 ## Optional Google Maps layers
 
